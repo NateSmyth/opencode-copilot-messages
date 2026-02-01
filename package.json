@@ -18,7 +18,8 @@
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
 		"test": "bun test",
-		"prepublishOnly": "bun run build"
+		"prepublishOnly": "bun run build",
+		"prepare": "husky"
 	},
 	"dependencies": {
 		"@opencode-ai/plugin": "^0.15.30",
@@ -28,9 +29,17 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.13",
 		"@types/bun": "latest",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.2.7",
 		"typescript": "^5.0.0"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
+	},
+	"lint-staged": {
+		"*.{ts,tsx,js,jsx,json}": [
+			"biome check --write",
+			"biome format --write"
+		]
 	}
 }
