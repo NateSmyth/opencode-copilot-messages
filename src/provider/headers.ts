@@ -16,14 +16,14 @@
  */
 
 export interface HeaderContext {
-  sessionToken: string;
-  version: string;
-  pluginVersion: string;
-  initiator: "user" | "agent";
-  betaFeatures?: string[];
+	sessionToken: string
+	version: string
+	pluginVersion: string
+	initiator: "user" | "agent"
+	betaFeatures?: string[]
 }
 
 export function buildHeaders(_context: HeaderContext): Record<string, string> {
-  // TODO: Implement buildHeaders()
-  return {};
+	// TODO: Implement buildHeaders()
+	return {}
 }

@@ -15,25 +15,25 @@
  */
 
 export interface CopilotModel {
-  id: string;
-  name: string;
-  vendor: string;
-  capabilities: {
-    family: string;
-    limits: {
-      max_context_window_tokens: number;
-      max_output_tokens: number;
-      max_prompt_tokens: number;
-    };
-    supports: {
-      max_thinking_budget?: number;
-      min_thinking_budget?: number;
-      streaming: boolean;
-      tool_calls: boolean;
-      vision: boolean;
-    };
-  };
-  supported_endpoints: string[];
+	id: string
+	name: string
+	vendor: string
+	capabilities: {
+		family: string
+		limits: {
+			max_context_window_tokens: number
+			max_output_tokens: number
+			max_prompt_tokens: number
+		}
+		supports: {
+			max_thinking_budget?: number
+			min_thinking_budget?: number
+			streaming: boolean
+			tool_calls: boolean
+			vision: boolean
+		}
+	}
+	supported_endpoints: string[]
 }
 
 // TODO: Implement fetchModels()

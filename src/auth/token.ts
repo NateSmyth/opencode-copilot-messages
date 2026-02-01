@@ -15,15 +15,15 @@
  */
 
 export interface TokenEnvelope {
-  token: string;
-  expires_at: number;
-  refresh_in: number;
+	token: string
+	expires_at: number
+	refresh_in: number
 }
 
 export interface SessionToken {
-  token: string;
-  expiresAt: number;
-  refreshIn: number;
+	token: string
+	expiresAt: number
+	refreshIn: number
 }
 
 // TODO: Implement exchangeForSessionToken()

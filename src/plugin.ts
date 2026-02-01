@@ -1,4 +1,4 @@
-import type { Plugin, Hooks } from "@opencode-ai/plugin";
+import type { Hooks, Plugin } from "@opencode-ai/plugin"
 
 /**
  * OpenCode plugin for Copilot Claude via Anthropic Messages API.
@@ -12,15 +12,15 @@ import type { Plugin, Hooks } from "@opencode-ai/plugin";
  * - Uses @ai-sdk/anthropic (Anthropic Messages API format)
  * - Critical: X-Initiator must check for tool_result content blocks
  */
-export const CopilotMessagesPlugin: Plugin = async (input) => {
-  // TODO: Implement plugin
-  const hooks: Hooks = {
-    auth: {
-      provider: "copilot-messages",
-      methods: [],
-      // loader: async (getAuth, provider) => { ... }
-    },
-  };
+export const CopilotMessagesPlugin: Plugin = async (_input) => {
+	// TODO: Implement plugin
+	const hooks: Hooks = {
+		auth: {
+			provider: "copilot-messages",
+			methods: [],
+			// loader: async (getAuth, provider) => { ... }
+		},
+	}
 
-  return hooks;
-};
+	return hooks
+}

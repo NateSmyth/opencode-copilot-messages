@@ -13,20 +13,20 @@
  *    until: access_token returned or expired
  */
 
-export const CLIENT_ID = "Iv1.b507a08c87ecfe98";
+export const CLIENT_ID = "Iv1.b507a08c87ecfe98"
 
 export interface DeviceCodeResponse {
-  device_code: string;
-  user_code: string;
-  verification_uri: string;
-  expires_in: number;
-  interval: number;
+	device_code: string
+	user_code: string
+	verification_uri: string
+	expires_in: number
+	interval: number
 }
 
 export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-  scope: string;
+	access_token: string
+	token_type: string
+	scope: string
 }
 
 // TODO: Implement authorizeDeviceCode()

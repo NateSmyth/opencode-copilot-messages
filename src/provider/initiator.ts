@@ -16,13 +16,13 @@
  */
 
 export interface AnthropicContentBlock {
-  type: string;
-  [key: string]: unknown;
+	type: string
+	[key: string]: unknown
 }
 
 export interface AnthropicMessage {
-  role: "user" | "assistant";
-  content: string | AnthropicContentBlock[];
+	role: "user" | "assistant"
+	content: string | AnthropicContentBlock[]
 }
 
 /**
@@ -33,26 +33,26 @@ export interface AnthropicMessage {
  * @returns "user" or "agent"
  */
 export function determineInitiator(
-  messages: AnthropicMessage[],
-  isSubagent: boolean = false,
+	messages: AnthropicMessage[],
+	isSubagent: boolean = false
 ): "user" | "agent" {
-  // Subagent sessions are always agent-initiated
-  if (isSubagent) return "agent";
+	// Subagent sessions are always agent-initiated
+	if (isSubagent) return "agent"
 
-  const lastMsg = messages.at(-1);
-  if (!lastMsg) return "agent";
+	const lastMsg = messages.at(-1)
+	if (!lastMsg) return "agent"
 
-  // Non-user role is always agent-initiated
-  if (lastMsg.role !== "user") return "agent";
+	// Non-user role is always agent-initiated
+	if (lastMsg.role !== "user") return "agent"
 
-  // User role - check for tool_result content blocks
-  if (Array.isArray(lastMsg.content)) {
-    const hasToolResult = lastMsg.content.some(
-      (block) => typeof block === "object" && block.type === "tool_result",
-    );
-    if (hasToolResult) return "agent";
-  }
+	// User role - check for tool_result content blocks
+	if (Array.isArray(lastMsg.content)) {
+		const hasToolResult = lastMsg.content.some(
+			(block) => typeof block === "object" && block.type === "tool_result"
+		)
+		if (hasToolResult) return "agent"
+	}
 
-  // Actual user message
-  return "user";
+	// Actual user message
+	return "user"
 }
