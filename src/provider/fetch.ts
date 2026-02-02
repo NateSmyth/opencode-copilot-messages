@@ -4,10 +4,11 @@
  * Injects required headers and handles auth.
  */
 
-import { buildHeaders, type HeaderContext } from "./headers"
+import { buildHeaders } from "./headers"
 
-export interface FetchContext extends HeaderContext {
+export interface FetchContext {
 	sessionToken: string
+	betaFeatures?: string[]
 }
 
 export async function copilotMessagesFetch(
@@ -15,7 +16,6 @@ export async function copilotMessagesFetch(
 	_init: RequestInit | undefined,
 	context: FetchContext
 ): Promise<Response> {
-	const _headers = buildHeaders(context)
 	// TODO: Implement copilotMessagesFetch()
 	throw new Error("Not implemented")
 }
