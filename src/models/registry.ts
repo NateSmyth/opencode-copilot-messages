@@ -97,9 +97,9 @@ export async function fetchModels(input: FetchInput): Promise<OpencodeModel[]> {
 		sessionToken: input.sessionToken,
 		initiator: "agent",
 		betaFeatures: input.betaFeatures,
+		interaction: "model-access",
+		intent: "model-access",
 	})
-	headers["x-interaction-type"] = "model-access"
-	headers["openai-intent"] = "model-access"
 	const res = await run(url, { method: "GET", headers })
 	const data = (await res.json()) as unknown
 	const models = parseModels(data)

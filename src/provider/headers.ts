@@ -26,6 +26,8 @@ export interface HeaderContext {
 	initiator: "user" | "agent"
 	hasImages?: boolean
 	betaFeatures?: string[]
+	interaction?: string
+	intent?: string
 }
 
 export function buildHeaders(context: HeaderContext): Record<string, string> {
@@ -36,8 +38,8 @@ export function buildHeaders(context: HeaderContext): Record<string, string> {
 		"editor-plugin-version": `copilot-chat/${COPILOT_CHAT_VERSION}`,
 		"copilot-integration-id": "vscode-chat",
 		"x-request-id": crypto.randomUUID(),
-		"x-interaction-type": "conversation-agent",
-		"openai-intent": "conversation-agent",
+		"x-interaction-type": context.interaction ?? "conversation-agent",
+		"openai-intent": context.intent ?? "conversation-agent",
 		"x-github-api-version": "2025-10-01",
 		"x-initiator": context.initiator,
 	}

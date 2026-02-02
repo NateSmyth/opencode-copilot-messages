@@ -64,10 +64,10 @@
 ---
 
 ### [Phase: REFACTOR]
-- [ ] [T08] Tighten types without `any`:
+- [x] [T08] Tighten types without `any`:
   - export an `OpencodeModel` type from `src/models/registry.ts` (or infer where possible)
   - ensure `options` fields remain optional/`undefined`-safe
-- [ ] [T09] (Optional) If it meaningfully reduces duplication, extend `buildHeaders()` to accept an optional intent/interaction override so `fetchModels()` doesn’t mutate header values inline. Keep the default behavior unchanged.
+- [x] [T09] (Optional) If it meaningfully reduces duplication, extend `buildHeaders()` to accept an optional intent/interaction override so `fetchModels()` doesn’t mutate header values inline. Keep the default behavior unchanged.
 ---
 - [ ] **COMMIT**: `refactor: simplify model registry headers/types`
 ---
