@@ -13,33 +13,13 @@ export interface FetchContext {
 }
 
 export async function copilotMessagesFetch(
-	_input: string | URL | Request,
-	_init: RequestInit | undefined,
+	input: string | URL | Request,
+	init: RequestInit | undefined,
 	context: FetchContext
 ): Promise<Response> {
-	const input = _input
-	const init = _init
-	const headers = new Headers()
-
-	if (input instanceof Request) {
-		for (const [key, value] of input.headers.entries()) {
-			headers.set(key, value)
-		}
-	}
-
-	if (init?.headers) {
-		const incoming = new Headers(init.headers)
-		for (const [key, value] of incoming.entries()) {
-			headers.set(key, value)
-		}
-	}
-
+	const headers = merge(input, init)
 	headers.delete("x-api-key")
-
-	const body = init?.body
-	const text = await readBody(body)
-	const parsed = parseBody(text)
-	const messages = parsed.messages
+	const messages = await read(init?.body)
 	const initiator = determineInitiator(messages)
 	const images = hasImageContent(messages)
 	const copilot = buildHeaders({
@@ -59,17 +39,27 @@ export async function copilotMessagesFetch(
 	})
 }
 
-async function readBody(body: RequestInit["body"] | null | undefined): Promise<string | null> {
-	if (!body) return null
-	if (typeof body === "string") return body
-	if (body instanceof ArrayBuffer) return new TextDecoder().decode(body)
-	if (ArrayBuffer.isView(body)) return new TextDecoder().decode(body)
-	return null
+const decoder = new TextDecoder()
+
+function merge(input: string | URL | Request, init: RequestInit | undefined): Headers {
+	const headers = new Headers(input instanceof Request ? input.headers : undefined)
+	if (!init?.headers) return headers
+	const incoming = new Headers(init.headers)
+	for (const [key, value] of incoming.entries()) {
+		headers.set(key, value)
+	}
+	return headers
 }
 
-function parseBody(text: string | null): { messages: AnthropicMessage[] } {
-	if (!text) return { messages: [] }
+async function read(body: RequestInit["body"] | null | undefined): Promise<AnthropicMessage[]> {
+	if (!body) return []
+	if (typeof body === "string") return parse(body)
+	if (body instanceof ArrayBuffer) return parse(decoder.decode(body))
+	if (ArrayBuffer.isView(body)) return parse(decoder.decode(body))
+	return []
+}
 
+function parse(text: string): AnthropicMessage[] {
 	const parsed = (() => {
 		try {
 			return JSON.parse(text) as { messages?: unknown }
@@ -77,7 +67,6 @@ function parseBody(text: string | null): { messages: AnthropicMessage[] } {
 			return null
 		}
 	})()
-
-	if (!parsed || !Array.isArray(parsed.messages)) return { messages: [] }
-	return { messages: parsed.messages as AnthropicMessage[] }
+	if (!parsed || !Array.isArray(parsed.messages)) return []
+	return parsed.messages as AnthropicMessage[]
 }

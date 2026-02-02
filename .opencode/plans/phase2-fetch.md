@@ -16,10 +16,11 @@
 - [x] [T03] Implement `copilotMessagesFetch()` in `src/provider/fetch.ts` (strip x-api-key, inject Copilot headers, derive initiator + vision from body)
 ---
 - [ ] **COMMIT**: `feat: implement copilot messages fetch wrapper`
+- [x] **COMMIT**: `feat: implement copilot messages fetch wrapper`
 ---
 
 ### Phase: REFACTOR
-- [ ] [T04] Tighten types and minimize parsing/merging duplication in `fetch.ts` + tests (no behavior change)
+- [x] [T04] Tighten types and minimize parsing/merging duplication in `fetch.ts` + tests (no behavior change)
 ---
 - [ ] **COMMIT**: `refactor: simplify copilot messages fetch wrapper`
 ---
