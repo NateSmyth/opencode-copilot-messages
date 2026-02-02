@@ -105,8 +105,8 @@
 ---
 
 ### [Phase: REFACTOR] Plugin assembly
-- [ ] [T12] Reduce duplication and keep exported surface stable (`CopilotMessagesPlugin`, `CopilotMessagesConfig`, `determineInitiator`).
-- [ ] [T13] Ensure no `any`, avoid `let`/`else`, and keep logic mostly inside `src/plugin.ts` with small local helpers only when reused.
+- [x] [T12] Reduce duplication and keep exported surface stable (`CopilotMessagesPlugin`, `CopilotMessagesConfig`, `determineInitiator`).
+- [x] [T13] Ensure no `any`, avoid `let`/`else`, and keep logic mostly inside `src/plugin.ts` with small local helpers only when reused.
 ---
 - [ ] **COMMIT**: `refactor: simplify copilot-messages plugin assembly`
 ---
