@@ -23,8 +23,8 @@
 		"prepare": "husky"
 	},
 	"dependencies": {
-		"@opencode-ai/plugin": "^0.15.30",
 		"@ai-sdk/anthropic": "^1.0.0",
+		"@opencode-ai/plugin": "^1.1.48",
 		"zod": "^3.24.0"
 	},
 	"devDependencies": {
