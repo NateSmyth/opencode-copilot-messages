@@ -9,10 +9,11 @@
 - [x] [T02] Add `src/provider/fetch.test.ts` covering header injection, initiator parsing, and vision detection
 ---
 - [ ] **COMMIT**: `test: cover copilot messages fetch wrapper`
+- [x] **COMMIT**: `test: cover copilot messages fetch wrapper`
 ---
 
 ### Phase: GREEN
-- [ ] [T03] Implement `copilotMessagesFetch()` in `src/provider/fetch.ts` (strip x-api-key, inject Copilot headers, derive initiator + vision from body)
+- [x] [T03] Implement `copilotMessagesFetch()` in `src/provider/fetch.ts` (strip x-api-key, inject Copilot headers, derive initiator + vision from body)
 ---
 - [ ] **COMMIT**: `feat: implement copilot messages fetch wrapper`
 ---
