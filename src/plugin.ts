@@ -1,6 +1,6 @@
 import type { Hooks, Plugin } from "@opencode-ai/plugin"
 import { authorizeDeviceCode, pollForToken } from "./auth/oauth"
-import { exchangeForSessionToken, refreshSessionToken } from "./auth/token"
+import { exchangeForSessionToken, getBaseUrlFromToken, refreshSessionToken } from "./auth/token"
 import type { StoredAuth } from "./auth/types"
 import { loadConfig } from "./config/schema"
 import { fetchModels } from "./models/registry"
@@ -113,9 +113,10 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				for (const model of models) {
 					list[model.id] = model
 				}
+				const baseURL = getBaseUrlFromToken(session.token) ?? "https://api.githubcopilot.com"
 				return {
 					apiKey: "",
-					baseURL: "https://api.copilot.com/v1",
+					baseURL: `${baseURL}/v1`,
 					fetch: (req: Request | string | URL, init?: RequestInit) =>
 						copilotMessagesFetch(req, init, {
 							sessionToken: session.token,

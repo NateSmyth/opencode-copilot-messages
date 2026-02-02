@@ -1,15 +1,6 @@
 import { describe, expect, it } from "bun:test"
+import type { Model } from "@opencode-ai/sdk"
 import type { CopilotModel } from "./registry"
-
-type OpenModel = {
-	id: string
-	name: string
-	providerID: string
-	api: { npm: string }
-	cost: { input: number; output: number }
-	limit: { context: number; output: number }
-	options: { maxThinkingBudget?: number; minThinkingBudget?: number }
-}
 
 type FetchInput = {
 	sessionToken: string
@@ -18,7 +9,7 @@ type FetchInput = {
 	betaFeatures?: string[]
 }
 
-type FetchModels = (input: FetchInput) => Promise<OpenModel[]>
+type FetchModels = (input: FetchInput) => Promise<Model[]>
 
 async function load() {
 	const registry = (await import("./registry")) as {
@@ -99,18 +90,51 @@ describe("copilot model registry", () => {
 		expect(res.length).toBe(1)
 		expect(res[0]).toEqual({
 			id: "claude-messages",
-			name: "claude-messages",
 			providerID: "copilot-messages",
-			api: { npm: "@ai-sdk/anthropic" },
-			cost: { input: 0, output: 0 },
+			name: "claude-messages",
+			api: {
+				id: "claude-messages",
+				url: "https://api.githubcopilot.com/v1",
+				npm: "@ai-sdk/anthropic",
+			},
+			capabilities: {
+				temperature: true,
+				reasoning: true,
+				attachment: false,
+				toolcall: true,
+				input: {
+					text: true,
+					audio: false,
+					image: false,
+					video: false,
+					pdf: false,
+				},
+				output: {
+					text: true,
+					audio: false,
+					image: false,
+					video: false,
+					pdf: false,
+				},
+			},
+			cost: {
+				input: 0,
+				output: 0,
+				cache: {
+					read: 0,
+					write: 0,
+				},
+			},
 			limit: {
 				context: 120000,
 				output: 4096,
 			},
+			status: "active",
 			options: {
 				maxThinkingBudget: 1024,
 				minThinkingBudget: 128,
 			},
+			headers: {},
 		})
 	})
 

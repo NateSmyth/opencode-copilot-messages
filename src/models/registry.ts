@@ -2,73 +2,97 @@
  * Model registry for Copilot Messages API.
  *
  * Fetches available models from:
- * GET https://api.copilot.com/models
+ * GET https://api.{from-token}/models
  *
  * Filters to models with supported_endpoints including "/v1/messages"
- *
- * Available Claude 4.x models:
- * - claude-4.5-opus
- * - claude-4.5-sonnet
- * - claude-4.5-haiku
- * - claude-4-sonnet
- * - claude-4.1-opus
  */
 
-import { buildHeaders } from "../provider/headers"
+import type { Model } from "@opencode-ai/sdk"
+import { getBaseUrlFromToken } from "../auth/token"
 
 export interface CopilotModel {
 	id: string
 	name: string
 	vendor: string
-	capabilities: {
-		family: string
-		limits: {
-			max_context_window_tokens: number
-			max_output_tokens: number
-			max_prompt_tokens: number
+	preview?: boolean
+	capabilities?: {
+		family?: string
+		limits?: {
+			max_context_window_tokens?: number
+			max_output_tokens?: number
+			max_prompt_tokens?: number
+			vision?: {
+				max_prompt_image_size?: number
+				max_prompt_images?: number
+				supported_media_types?: string[]
+			}
 		}
-		supports: {
+		supports?: {
 			max_thinking_budget?: number
 			min_thinking_budget?: number
-			streaming: boolean
-			tool_calls: boolean
-			vision: boolean
+			streaming?: boolean
+			tool_calls?: boolean
+			vision?: boolean
+			parallel_tool_calls?: boolean
 		}
 	}
-	supported_endpoints: string[]
+	supported_endpoints?: string[]
 }
 
-export type OpencodeModel = {
-	id: string
-	name: string
-	providerID: "copilot-messages"
-	api: { npm: "@ai-sdk/anthropic" }
-	cost: { input: 0; output: 0 }
-	limit: {
-		context: number
-		output: number
-	}
-	options: {
-		maxThinkingBudget?: number
-		minThinkingBudget?: number
-	}
-}
+export function mapToOpencodeModel(model: CopilotModel): Model {
+	const caps = model.capabilities ?? {}
+	const limits = caps.limits ?? {}
+	const supports = caps.supports ?? {}
+	const vision = !!supports.vision
+	const reasoning = supports.max_thinking_budget !== undefined
 
-export function mapToOpencodeModel(model: CopilotModel): OpencodeModel {
 	return {
 		id: model.id,
-		name: model.name,
 		providerID: "copilot-messages",
-		api: { npm: "@ai-sdk/anthropic" },
-		cost: { input: 0, output: 0 },
+		name: model.name,
+		api: {
+			id: model.id,
+			url: "https://api.githubcopilot.com/v1",
+			npm: "@ai-sdk/anthropic",
+		},
+		capabilities: {
+			temperature: true,
+			reasoning,
+			attachment: vision,
+			toolcall: !!supports.tool_calls,
+			input: {
+				text: true,
+				audio: false,
+				image: vision,
+				video: false,
+				pdf: false,
+			},
+			output: {
+				text: true,
+				audio: false,
+				image: false,
+				video: false,
+				pdf: false,
+			},
+		},
+		cost: {
+			input: 0,
+			output: 0,
+			cache: {
+				read: 0,
+				write: 0,
+			},
+		},
 		limit: {
-			context: model.capabilities.limits.max_context_window_tokens,
-			output: model.capabilities.limits.max_output_tokens,
+			context: limits.max_context_window_tokens ?? 200000,
+			output: limits.max_output_tokens ?? 16000,
 		},
+		status: model.preview ? "beta" : "active",
 		options: {
-			maxThinkingBudget: model.capabilities.supports.max_thinking_budget,
-			minThinkingBudget: model.capabilities.supports.min_thinking_budget,
+			maxThinkingBudget: supports.max_thinking_budget,
+			minThinkingBudget: supports.min_thinking_budget,
 		},
+		headers: {},
 	}
 }
 
@@ -80,6 +104,8 @@ type FetchInput = {
 }
 
 const MESSAGES_ENDPOINT = "/v1/messages"
+const VSCODE_VERSION = "1.107.0"
+const COPILOT_CHAT_VERSION = "0.35.0"
 
 function parseModels(value: unknown): CopilotModel[] {
 	if (Array.isArray(value)) return value
@@ -90,20 +116,30 @@ function parseModels(value: unknown): CopilotModel[] {
 	return []
 }
 
-export async function fetchModels(input: FetchInput): Promise<OpencodeModel[]> {
+export async function fetchModels(input: FetchInput): Promise<Model[]> {
 	const run = input.fetch ?? fetch
-	const url = new URL("/models", input.url ?? "https://api.copilot.com")
-	const headers = buildHeaders({
-		sessionToken: input.sessionToken,
-		initiator: "agent",
-		betaFeatures: input.betaFeatures,
-		interaction: "model-access",
-		intent: "model-access",
-	})
+	const base =
+		input.url ?? getBaseUrlFromToken(input.sessionToken) ?? "https://api.githubcopilot.com"
+	const url = new URL("/models", base)
+	const headers = {
+		authorization: `Bearer ${input.sessionToken}`,
+		"user-agent": `GitHubCopilotChat/${COPILOT_CHAT_VERSION}`,
+		"editor-version": `vscode/${VSCODE_VERSION}`,
+		"editor-plugin-version": `copilot-chat/${COPILOT_CHAT_VERSION}`,
+		"copilot-integration-id": "vscode-chat",
+		"x-request-id": crypto.randomUUID(),
+		"x-github-api-version": "2025-10-01",
+		"x-interaction-type": "model-access",
+		"openai-intent": "model-access",
+	}
 	const res = await run(url, { method: "GET", headers })
 	const data = (await res.json()) as unknown
 	const models = parseModels(data)
 	return models
-		.filter((model) => model.supported_endpoints.includes(MESSAGES_ENDPOINT))
+		.filter(
+			(model) =>
+				Array.isArray(model.supported_endpoints) &&
+				model.supported_endpoints.includes(MESSAGES_ENDPOINT)
+		)
 		.map(mapToOpencodeModel)
 }

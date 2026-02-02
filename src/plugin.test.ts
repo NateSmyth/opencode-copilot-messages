@@ -160,7 +160,7 @@ describe("CopilotMessagesPlugin hooks", () => {
 		try {
 			const res = await hooks.auth.loader(async () => auth, provider as never)
 			expect(res.apiKey).toBe("")
-			expect(res.baseURL).toBe("https://api.copilot.com/v1")
+			expect(res.baseURL).toBe("https://api.githubcopilot.com/v1")
 			expect(typeof res.fetch).toBe("function")
 			expect(Object.keys(provider.models)).toEqual(["claude-messages"])
 

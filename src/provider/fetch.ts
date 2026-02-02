@@ -19,9 +19,11 @@ export async function copilotMessagesFetch(
 ): Promise<Response> {
 	const headers = merge(input, init)
 	headers.delete("x-api-key")
-	const messages = await read(init?.body)
-	const initiator = forcedInitiator(headers.get("x-initiator")) ?? determineInitiator(messages)
-	const images = hasImageContent(messages)
+	const body = await readBody(init?.body)
+	const initiator =
+		forcedInitiator(headers.get("x-initiator")) ??
+		(isInternalAgent(body) ? "agent" : determineInitiator(body.messages))
+	const images = hasImageContent(body.messages)
 	const copilot = buildHeaders({
 		sessionToken: context.sessionToken,
 		initiator,
@@ -51,24 +53,44 @@ function merge(input: string | URL | Request, init: RequestInit | undefined): He
 	return headers
 }
 
-async function read(body: RequestInit["body"] | null | undefined): Promise<AnthropicMessage[]> {
-	if (!body) return []
+interface ParsedBody {
+	messages: AnthropicMessage[]
+	system?: string | Array<{ type: string; text?: string }>
+}
+
+async function readBody(body: RequestInit["body"] | null | undefined): Promise<ParsedBody> {
+	if (!body) return { messages: [] }
 	if (typeof body === "string") return parse(body)
 	if (body instanceof ArrayBuffer) return parse(decoder.decode(body))
 	if (ArrayBuffer.isView(body)) return parse(decoder.decode(body))
-	return []
+	return { messages: [] }
 }
 
-function parse(text: string): AnthropicMessage[] {
-	const parsed = (() => {
-		try {
-			return JSON.parse(text) as { messages?: unknown }
-		} catch {
-			return null
+function parse(text: string): ParsedBody {
+	try {
+		const parsed = JSON.parse(text) as { messages?: unknown; system?: unknown }
+		const messages = Array.isArray(parsed.messages) ? (parsed.messages as AnthropicMessage[]) : []
+		const system = parsed.system as ParsedBody["system"]
+		return { messages, system }
+	} catch {
+		return { messages: [] }
+	}
+}
+
+function isInternalAgent(body: ParsedBody): boolean {
+	const system = body.system
+	if (!system) return false
+	// Check for title agent system prompt
+	if (typeof system === "string") {
+		return system.startsWith("You are a title generator")
+	}
+	if (Array.isArray(system) && system.length > 0) {
+		const first = system[0]
+		if (typeof first === "object" && typeof first.text === "string") {
+			return first.text.startsWith("You are a title generator")
 		}
-	})()
-	if (!parsed || !Array.isArray(parsed.messages)) return []
-	return parsed.messages as AnthropicMessage[]
+	}
+	return false
 }
 
 function forcedInitiator(value: string | null): "user" | "agent" | null {

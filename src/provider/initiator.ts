@@ -10,8 +10,9 @@
  *
  * Algorithm:
  * 1. If last message role !== "user" -> "agent"
- * 2. If last message role === "user" AND last content block is tool_result -> "agent"
- * 3. Otherwise -> "user"
+ * 2. If last message content is a simple string -> "user"
+ * 3. If last content block is type "text" -> "user"
+ * 4. Otherwise -> "agent" (conservative default)
  *
  * Note: Subagent detection is handled separately via chat.headers hook,
  * not in this function.
@@ -31,7 +32,6 @@ export interface AnthropicMessage {
  * Determine X-Initiator value based on message content.
  *
  * Checks ONLY the last content block of the last message.
- * If the last block is a tool_result, this is agent-initiated.
  *
  * @param messages - The messages being sent to the API
  * @returns "user" or "agent"
@@ -43,19 +43,20 @@ export function determineInitiator(messages: AnthropicMessage[]): "user" | "agen
 	// Non-user role is always agent-initiated
 	if (lastMsg.role !== "user") return "agent"
 
-	// String content is always user-initiated
+	// String content is user-initiated
 	if (typeof lastMsg.content === "string") return "user"
 
 	// Check ONLY the last content block
 	if (Array.isArray(lastMsg.content) && lastMsg.content.length > 0) {
 		const lastBlock = lastMsg.content.at(-1)
-		if (typeof lastBlock === "object" && lastBlock.type === "tool_result") {
-			return "agent"
+		// Only text blocks from user messages are user-initiated
+		if (typeof lastBlock === "object" && lastBlock.type === "text") {
+			return "user"
 		}
 	}
 
-	// Actual user message
-	return "user"
+	// Conservative default: agent
+	return "agent"
 }
 
 /**
