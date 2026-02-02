@@ -1,10 +1,13 @@
 import type { Hooks, Plugin } from "@opencode-ai/plugin"
+import type { Model } from "@opencode-ai/sdk"
 import { authorizeDeviceCode, pollForToken } from "./auth/oauth"
 import { exchangeForSessionToken, getBaseUrlFromToken, refreshSessionToken } from "./auth/token"
 import type { StoredAuth } from "./auth/types"
 import { loadConfig } from "./config/schema"
 import { fetchModels } from "./models/registry"
 import { copilotMessagesFetch } from "./provider/fetch"
+
+type ModelWithVariants = Model & { variants?: Record<string, unknown> }
 
 /**
  * OpenCode plugin for Copilot Claude via Anthropic Messages API.
@@ -103,7 +106,7 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 						},
 					})
 				}
-				const target = provider as unknown as { models?: Record<string, unknown> }
+				const target = provider as unknown as { models?: Record<string, ModelWithVariants> }
 				const list = target.models ?? {}
 				target.models = list
 				const models = await fetchModels({
@@ -111,7 +114,12 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 					betaFeatures: config.beta_features,
 				})
 				for (const model of models) {
-					list[model.id] = model
+					const existing = list[model.id]
+					if (!existing) {
+						list[model.id] = model
+						continue
+					}
+					list[model.id] = mergeModel(model, existing)
 				}
 				const baseURL = getBaseUrlFromToken(session.token) ?? "https://api.githubcopilot.com"
 				return {
@@ -128,4 +136,26 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 	} as Hooks
 
 	return hooks
+}
+
+function mergeModel(model: ModelWithVariants, existing: ModelWithVariants): ModelWithVariants {
+	return {
+		...model,
+		limit: {
+			...model.limit,
+			...existing.limit,
+		},
+		options: {
+			...model.options,
+			...existing.options,
+		},
+		headers: {
+			...model.headers,
+			...existing.headers,
+		},
+		variants: {
+			...model.variants,
+			...existing.variants,
+		},
+	}
 }

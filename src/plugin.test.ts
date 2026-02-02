@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test"
+import type { Model } from "@opencode-ai/sdk"
 import { CopilotMessagesPlugin } from "./plugin"
+
+type ModelWithVariants = Model & { variants?: Record<string, unknown> }
 
 describe("CopilotMessagesPlugin hooks", () => {
 	it("registers provider and sets initiator for subagents", async () => {
@@ -156,13 +159,80 @@ describe("CopilotMessagesPlugin hooks", () => {
 		if (!hooks.auth?.loader) {
 			throw new Error("hooks missing auth.loader")
 		}
-		const provider = { models: {} as Record<string, unknown> }
+		const existingModel: ModelWithVariants = {
+			id: "claude-messages",
+			providerID: "copilot-messages",
+			name: "claude-messages",
+			api: {
+				id: "claude-messages",
+				url: "https://api.githubcopilot.com/v1",
+				npm: "@ai-sdk/anthropic",
+			},
+			capabilities: {
+				temperature: true,
+				reasoning: true,
+				attachment: false,
+				toolcall: true,
+				input: {
+					text: true,
+					audio: false,
+					image: false,
+					video: false,
+					pdf: false,
+				},
+				output: {
+					text: true,
+					audio: false,
+					image: false,
+					video: false,
+					pdf: false,
+				},
+			},
+			cost: {
+				input: 0,
+				output: 0,
+				cache: {
+					read: 0,
+					write: 0,
+				},
+			},
+			limit: {
+				context: 200000,
+				output: 64000,
+			},
+			status: "active",
+			options: {
+				custom: "keep",
+			},
+			headers: {
+				"x-test": "1",
+			},
+			variants: {
+				custom: {
+					thinking: {
+						type: "enabled",
+						budgetTokens: 123,
+					},
+				},
+			},
+		}
+		const provider = {
+			models: {
+				"claude-messages": existingModel,
+			} as Record<string, ModelWithVariants>,
+		}
 		try {
 			const res = await hooks.auth.loader(async () => auth, provider as never)
 			expect(res.apiKey).toBe("")
 			expect(res.baseURL).toBe("https://api.githubcopilot.com/v1")
 			expect(typeof res.fetch).toBe("function")
 			expect(Object.keys(provider.models)).toEqual(["claude-messages"])
+			const merged = provider.models["claude-messages"] as ModelWithVariants
+			expect(merged.limit.output).toBe(64000)
+			expect(merged.options.custom).toBe("keep")
+			expect(merged.options.maxThinkingBudget).toBe(128)
+			expect(merged.headers["x-test"]).toBe("1")
+			expect(merged.variants?.custom).toEqual(existingModel.variants?.custom)
 
 			const body = JSON.stringify({ messages: [{ role: "user", content: "hi" }] })
 			await (res.fetch as (req: string, init: RequestInit) => Promise<Response>)(
