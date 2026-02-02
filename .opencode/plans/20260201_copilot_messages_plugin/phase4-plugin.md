@@ -2,7 +2,7 @@
 
 ## Unresolved
 > Blocking only.
-- [x] [U1] Resolved: use lowercase `x-initiator` for the subagent override header.
+- [x] [U1] Confirm whether OpenCode expects the subagent override header key to be `x-initiator` (lowercase) vs `X-Initiator`. (OpenCode’s built-in Copilot plugin uses `x-initiator`, so this plan assumes lowercase.)
 
 ## Checklist
 
@@ -11,8 +11,20 @@
 
 ---
 
+### [Phase: RED] Messages intent headers
+- [x] [T14] Extend `src/provider/fetch.test.ts` to assert `x-interaction-type` and `openai-intent` are `messages-proxy` for message requests.
+---
+- [x] **COMMIT**: `test: require messages-proxy intent headers`
+---
+
+### [Phase: GREEN] Messages intent headers
+- [x] [T15] Update message header defaults to use `messages-proxy` while keeping `/models` requests at `model-access`.
+---
+- [x] **COMMIT**: `fix: set messages-proxy intent headers for messages requests`
+---
+
 ### [Phase: RED] Config loading (Phase 5)
-- [x] [T01] Add `src/config/schema.test.ts` covering `loadConfig()`:
+- [ ] [T01] Add `src/config/schema.test.ts` covering `loadConfig()`:
   - missing file → returns schema defaults (`debug: false`) with optional fields `undefined`
   - partial file (e.g. only `beta_features`) → still applies defaults
   - invalid types/ranges (e.g. `thinking_budget: 1`) → rejects
@@ -21,38 +33,38 @@
 ---
 
 ### [Phase: GREEN] Config loading (Phase 5)
-- [x] [T02] Implement `loadConfig()` in `src/config/schema.ts` using Bun file APIs and `configSchema` parsing.
+- [ ] [T02] Implement `loadConfig()` in `src/config/schema.ts` using Bun file APIs and `configSchema` parsing.
 ---
 - [ ] **COMMIT**: `feat: load copilot-messages config file`
 ---
 
 ### [Phase: REFACTOR] Config loading
-- [x] [T03] Simplify config loader (single-path resolution, minimal parsing helpers, stable errors).
+- [ ] [T03] Simplify config loader (single-path resolution, minimal parsing helpers, stable errors).
 ---
 - [ ] **COMMIT**: `refactor: simplify copilot-messages config loader`
 ---
 
 ### [Phase: RED] Respect explicit `x-initiator` override (required for subagent forcing)
-- [x] [T04] Extend `src/provider/fetch.test.ts`:
+- [ ] [T04] Extend `src/provider/fetch.test.ts`:
   - when caller sets `x-initiator: agent` but body would derive `user`, outgoing request keeps `x-initiator: agent`
 ---
 - [ ] **COMMIT**: `test: allow forced x-initiator override`
 ---
 
 ### [Phase: GREEN] Respect explicit `x-initiator` override
-- [x] [T05] Update `src/provider/fetch.ts` to prefer an existing `x-initiator` header (`user|agent`) over `determineInitiator(messages)`.
+- [ ] [T05] Update `src/provider/fetch.ts` to prefer an existing `x-initiator` header (`user|agent`) over `determineInitiator(messages)`.
 ---
 - [ ] **COMMIT**: `fix: respect explicit x-initiator header`
 ---
 
 ### [Phase: REFACTOR] Fetch override support
-- [x] [T06] Keep fetch wrapper behavior unchanged for callers that do not set `x-initiator`.
+- [ ] [T06] Keep fetch wrapper behavior unchanged for callers that do not set `x-initiator`.
 ---
 - [ ] **COMMIT**: `refactor: keep fetch initiator override minimal`
 ---
 
 ### [Phase: RED] Plugin hooks: provider registration + subagent initiator (Phase 4)
-- [x] [T07] Add `src/plugin.test.ts` covering:
+- [ ] [T07] Add `src/plugin.test.ts` covering:
   - `config` hook registers provider id `copilot-messages`
   - `chat.headers` sets `x-initiator: agent` **only** when:
     - `input.provider.info.id === "copilot-messages"`, and
@@ -63,7 +75,7 @@
 ---
 
 ### [Phase: GREEN] Plugin hooks: provider registration + subagent initiator
-- [x] [T08] Implement in `src/plugin.ts`:
+- [ ] [T08] Implement in `src/plugin.ts`:
   - `config` hook: ensure `config.provider["copilot-messages"]` exists with `npm: "@ai-sdk/anthropic"`, `name`, and empty `models` map
   - `chat.headers` hook: subagent detection via `input.message?.metadata?.parentSessionId` and sets `output.headers["x-initiator"] = "agent"` (provider-gated)
   - (Optional but recommended) `chat.params` hook: apply `thinking_budget` from plugin config into `output.options` for Anthropic provider options
@@ -72,7 +84,7 @@
 ---
 
 ### [Phase: RED] auth.loader: refresh token, fetch/register models, return init config
-- [x] [T09] Extend `src/plugin.test.ts` with a loader-focused test that (no real network):
+- [ ] [T09] Extend `src/plugin.test.ts` with a loader-focused test that (no real network):
   - provides OAuth auth (`{ type: "oauth", refresh, access, expires }`)
   - uses a local `Bun.serve()` server to validate the returned `fetch` behavior (strips `x-api-key`, injects `authorization: Bearer <session>`, preserves caller headers)
   - asserts `provider.models` is populated from registry results
@@ -85,11 +97,11 @@
 ---
 
 ### [Phase: GREEN] auth.loader + auth.methods
-- [x] [T10] Implement `auth.methods` in `src/plugin.ts` (device code OAuth) using the already-tested building blocks:
+- [ ] [T10] Implement `auth.methods` in `src/plugin.ts` (device code OAuth) using the already-tested building blocks:
   - `authorizeDeviceCode()` + `pollForToken()` to obtain GitHub OAuth token
   - `exchangeForSessionToken()` to obtain Copilot session token
   - return `{ type: "success", refresh: <github>, access: <session>, expires: <ms epoch> }` in the `authorize` callback
-- [x] [T11] Implement `auth.loader` in `src/plugin.ts`:
+- [ ] [T11] Implement `auth.loader` in `src/plugin.ts`:
   - read plugin config via `loadConfig()` and pass `beta_features` to:
     - `fetchModels({ sessionToken, betaFeatures })`
     - returned `fetch` wrapper (`copilotMessagesFetch(..., { sessionToken, betaFeatures })`)
@@ -105,8 +117,8 @@
 ---
 
 ### [Phase: REFACTOR] Plugin assembly
-- [x] [T12] Reduce duplication and keep exported surface stable (`CopilotMessagesPlugin`, `CopilotMessagesConfig`, `determineInitiator`).
-- [x] [T13] Ensure no `any`, avoid `let`/`else`, and keep logic mostly inside `src/plugin.ts` with small local helpers only when reused.
+- [ ] [T12] Reduce duplication and keep exported surface stable (`CopilotMessagesPlugin`, `CopilotMessagesConfig`, `determineInitiator`).
+- [ ] [T13] Ensure no `any`, avoid `let`/`else`, and keep logic mostly inside `src/plugin.ts` with small local helpers only when reused.
 ---
 - [ ] **COMMIT**: `refactor: simplify copilot-messages plugin assembly`
 ---
@@ -140,9 +152,9 @@ Given OpenCode loads this npm plugin, when configuration is applied and a Copilo
 
 ## Verification
 
-- [x] All tests pass (`bun test`)
-- [x] No type errors (`bun run typecheck`)
-- [x] Lint clean (`bun run lint`)
+- [ ] All tests pass (`bun test`)
+- [ ] No type errors (`bun run typecheck`)
+- [ ] Lint clean (`bun run lint`)
 - [ ] Manual (local OpenCode): add plugin to `opencode.json` and verify:
   - provider appears as `copilot-messages`
   - `baseURL` hits `https://api.copilot.com/v1/messages`
