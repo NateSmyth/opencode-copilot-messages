@@ -2,7 +2,7 @@
 
 ## Unresolved
 > Blocking only.
-- [ ] [U1] Confirm whether OpenCode expects the subagent override header key to be `x-initiator` (lowercase) vs `X-Initiator`. (OpenCode’s built-in Copilot plugin uses `x-initiator`, so this plan assumes lowercase.)
+- [x] [U1] Resolved: use lowercase `x-initiator` for the subagent override header.
 
 ## Checklist
 
