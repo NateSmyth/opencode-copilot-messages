@@ -18,7 +18,7 @@
 ---
 
 ### Phase: REFACTOR (Device Code OAuth)
-- [ ] [T04] Tighten errors/types and remove duplication in oauth tests
+- [x] [T04] Tighten errors/types and remove duplication in oauth tests
 ---
 - [ ] **COMMIT**: `refactor: harden oauth flow and tests`
 ---

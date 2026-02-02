@@ -43,6 +43,11 @@ async function load() {
 }
 
 describe("oauth device flow", () => {
+	const base = 1_700_000_000_000
+	const now = () => base
+	const expiresAt = Math.floor(base / 1000) + 60
+	const idle = async (_ms: number) => {}
+
 	it("authorizeDeviceCode() sends required form fields", async () => {
 		const data: DeviceCodeResponse = {
 			device_code: "device",
@@ -104,13 +109,11 @@ describe("oauth device flow", () => {
 		const sleep = async (ms: number) => {
 			waits.push(ms)
 		}
-		const base = 1_700_000_000_000
-		const now = () => base
 		const { poll } = await load()
 		const res = await poll({
 			deviceCode: "device",
 			interval: 1,
-			expiresAt: Math.floor(base / 1000) + 60,
+			expiresAt,
 			sleep,
 			now,
 			url: `http://127.0.0.1:${server.port}`,
@@ -143,13 +146,11 @@ describe("oauth device flow", () => {
 		const sleep = async (ms: number) => {
 			waits.push(ms)
 		}
-		const base = 1_700_000_000_000
-		const now = () => base
 		const { poll } = await load()
 		const res = await poll({
 			deviceCode: "device",
 			interval: 1,
-			expiresAt: Math.floor(base / 1000) + 60,
+			expiresAt,
 			sleep,
 			now,
 			url: `http://127.0.0.1:${server.port}`,
@@ -166,15 +167,12 @@ describe("oauth device flow", () => {
 			fetch: async () => Response.json({ error: "access_denied" }),
 		})
 
-		const base = 1_700_000_000_000
-		const now = () => base
-		const sleep = async (_ms: number) => {}
 		const { poll } = await load()
 		const run = poll({
 			deviceCode: "device",
 			interval: 1,
-			expiresAt: Math.floor(base / 1000) + 60,
-			sleep,
+			expiresAt,
+			sleep: idle,
 			now,
 			url: `http://127.0.0.1:${server.port}`,
 			fetch,
@@ -189,15 +187,12 @@ describe("oauth device flow", () => {
 			fetch: async () => Response.json({ error: "expired_token" }),
 		})
 
-		const base = 1_700_000_000_000
-		const now = () => base
-		const sleep = async (_ms: number) => {}
 		const { poll } = await load()
 		const run = poll({
 			deviceCode: "device",
 			interval: 1,
-			expiresAt: Math.floor(base / 1000) + 60,
-			sleep,
+			expiresAt,
+			sleep: idle,
 			now,
 			url: `http://127.0.0.1:${server.port}`,
 			fetch,
