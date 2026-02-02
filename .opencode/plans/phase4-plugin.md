@@ -21,7 +21,7 @@
 ---
 
 ### [Phase: GREEN] Config loading (Phase 5)
-- [ ] [T02] Implement `loadConfig()` in `src/config/schema.ts` using Bun file APIs and `configSchema` parsing.
+- [x] [T02] Implement `loadConfig()` in `src/config/schema.ts` using Bun file APIs and `configSchema` parsing.
 ---
 - [ ] **COMMIT**: `feat: load copilot-messages config file`
 ---

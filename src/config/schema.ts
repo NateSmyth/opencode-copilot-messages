@@ -19,4 +19,16 @@ export const configSchema = z.object({
 
 export type CopilotMessagesConfig = z.infer<typeof configSchema>
 
-// TODO: Implement loadConfig()
+const CONFIG_PATH = `${Bun.env.HOME ?? ""}/.config/opencode/copilot-messages.json`
+
+export async function loadConfig(): Promise<CopilotMessagesConfig> {
+	const file = Bun.file(CONFIG_PATH)
+	const exists = await file.exists()
+	if (!exists) return configSchema.parse({})
+
+	const text = await file.text()
+	if (!text.trim()) return configSchema.parse({})
+
+	const data = JSON.parse(text) as unknown
+	return configSchema.parse(data)
+}
