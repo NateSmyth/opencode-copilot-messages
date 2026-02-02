@@ -40,7 +40,7 @@
 ---
 
 ### [Phase: GREEN] Respect explicit `x-initiator` override
-- [ ] [T05] Update `src/provider/fetch.ts` to prefer an existing `x-initiator` header (`user|agent`) over `determineInitiator(messages)`.
+- [x] [T05] Update `src/provider/fetch.ts` to prefer an existing `x-initiator` header (`user|agent`) over `determineInitiator(messages)`.
 ---
 - [ ] **COMMIT**: `fix: respect explicit x-initiator header`
 ---
