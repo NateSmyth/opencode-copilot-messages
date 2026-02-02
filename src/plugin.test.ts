@@ -11,10 +11,9 @@ describe("CopilotMessagesPlugin hooks", () => {
 			throw new Error("hooks missing config or chat.headers")
 		}
 
-		const configInput = { config: { provider: {} as Record<string, unknown> } }
-		const configRes = await hooks.config(configInput as never)
-		const config = configRes?.config ?? configInput.config
-		const provider = config.provider as Record<string, unknown>
+		const configInput = { provider: {} as Record<string, unknown> }
+		await hooks.config(configInput as never)
+		const provider = configInput.provider as Record<string, unknown>
 		expect(provider["copilot-messages"]).toEqual({
 			npm: "@ai-sdk/anthropic",
 			name: "Copilot Messages",

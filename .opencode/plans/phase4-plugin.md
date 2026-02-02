@@ -63,7 +63,7 @@
 ---
 
 ### [Phase: GREEN] Plugin hooks: provider registration + subagent initiator
-- [ ] [T08] Implement in `src/plugin.ts`:
+- [x] [T08] Implement in `src/plugin.ts`:
   - `config` hook: ensure `config.provider["copilot-messages"]` exists with `npm: "@ai-sdk/anthropic"`, `name`, and empty `models` map
   - `chat.headers` hook: subagent detection via `input.message?.metadata?.parentSessionId` and sets `output.headers["x-initiator"] = "agent"` (provider-gated)
   - (Optional but recommended) `chat.params` hook: apply `thinking_budget` from plugin config into `output.options` for Anthropic provider options
