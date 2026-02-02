@@ -38,8 +38,8 @@ export function buildHeaders(context: HeaderContext): Record<string, string> {
 		"editor-plugin-version": `copilot-chat/${COPILOT_CHAT_VERSION}`,
 		"copilot-integration-id": "vscode-chat",
 		"x-request-id": crypto.randomUUID(),
-		"x-interaction-type": context.interaction ?? "conversation-agent",
-		"openai-intent": context.intent ?? "conversation-agent",
+		"x-interaction-type": context.interaction ?? "messages-proxy",
+		"openai-intent": context.intent ?? "messages-proxy",
 		"x-github-api-version": "2025-10-01",
 		"x-initiator": context.initiator,
 	}
