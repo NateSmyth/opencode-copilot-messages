@@ -140,9 +140,9 @@ Given OpenCode loads this npm plugin, when configuration is applied and a Copilo
 
 ## Verification
 
-- [ ] All tests pass (`bun test`)
-- [ ] No type errors (`bun run typecheck`)
-- [ ] Lint clean (`bun run lint`)
+- [x] All tests pass (`bun test`)
+- [x] No type errors (`bun run typecheck`)
+- [x] Lint clean (`bun run lint`)
 - [ ] Manual (local OpenCode): add plugin to `opencode.json` and verify:
   - provider appears as `copilot-messages`
   - `baseURL` hits `https://api.copilot.com/v1/messages`

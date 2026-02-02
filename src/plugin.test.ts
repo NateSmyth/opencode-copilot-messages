@@ -5,7 +5,10 @@ describe("CopilotMessagesPlugin hooks", () => {
 	it("registers provider and sets initiator for subagents", async () => {
 		const hooks = (await CopilotMessagesPlugin({} as never)) as unknown as {
 			config?: (input: unknown) => Promise<void>
-			"chat.headers"?: (input: unknown, output: { headers: Record<string, string> }) => Promise<void>
+			"chat.headers"?: (
+				input: unknown,
+				output: { headers: Record<string, string> }
+			) => Promise<void>
 		}
 		if (!hooks.config || !hooks["chat.headers"]) {
 			throw new Error("hooks missing config or chat.headers")
@@ -29,17 +32,23 @@ describe("CopilotMessagesPlugin hooks", () => {
 		expect(headersRes.headers["x-initiator"]).toBe("agent")
 
 		const otherRes = { headers: {} as Record<string, string> }
-		await hooks["chat.headers"]({
-			provider: { info: { id: "other" } },
-			message: { metadata: { parentSessionId: "parent" } },
-		} as never, otherRes)
+		await hooks["chat.headers"](
+			{
+				provider: { info: { id: "other" } },
+				message: { metadata: { parentSessionId: "parent" } },
+			} as never,
+			otherRes
+		)
 		expect(otherRes.headers["x-initiator"]).toBeUndefined()
 
 		const userRes = { headers: {} as Record<string, string> }
-		await hooks["chat.headers"]({
-			provider: { info: { id: "copilot-messages" } },
-			message: { metadata: {} },
-		} as never, userRes)
+		await hooks["chat.headers"](
+			{
+				provider: { info: { id: "copilot-messages" } },
+				message: { metadata: {} },
+			} as never,
+			userRes
+		)
 		expect(userRes.headers["x-initiator"]).toBeUndefined()
 	})
 
@@ -137,7 +146,12 @@ describe("CopilotMessagesPlugin hooks", () => {
 		const hooks = (await CopilotMessagesPlugin({
 			client: { auth: { set: async (_input: unknown) => {} } },
 		} as never)) as unknown as {
-			auth?: { loader?: (auth: () => Promise<unknown>, provider: unknown) => Promise<Record<string, unknown>> }
+			auth?: {
+				loader?: (
+					auth: () => Promise<unknown>,
+					provider: unknown
+				) => Promise<Record<string, unknown>>
+			}
 		}
 		if (!hooks.auth?.loader) {
 			throw new Error("hooks missing auth.loader")

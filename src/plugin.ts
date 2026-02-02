@@ -34,7 +34,10 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 			}
 		},
 		"chat.headers": async (
-			data: { provider: { info: { id: string } }; message?: { metadata?: { parentSessionId?: string } } },
+			data: {
+				provider: { info: { id: string } }
+				message?: { metadata?: { parentSessionId?: string } }
+			},
 			output: { headers: Record<string, string> }
 		) => {
 			const isCopilot = data.provider.info.id === "copilot-messages"
