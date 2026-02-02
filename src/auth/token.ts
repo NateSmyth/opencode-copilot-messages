@@ -34,7 +34,8 @@ export async function exchangeForSessionToken(input: {
 }): Promise<SessionToken> {
 	const run = input.fetch ?? fetch
 	const base = input.url ?? "https://api.github.com"
-	const res = await run(new URL("/copilot_internal/v2/token", base), {
+	const endpoint = new URL("/copilot_internal/v2/token", base)
+	const res = await run(endpoint, {
 		method: "POST",
 		headers: {
 			Authorization: `token ${input.githubToken}`,
@@ -44,8 +45,7 @@ export async function exchangeForSessionToken(input: {
 	})
 
 	if (!res.ok) {
-		const text = await res.text()
-		throw new Error(`token exchange failed (${res.status}): ${text}`)
+		throw new Error(`token exchange failed (${res.status}) ${endpoint.pathname}`)
 	}
 
 	const data = (await res.json()) as TokenEnvelope

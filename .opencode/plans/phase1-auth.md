@@ -36,7 +36,7 @@
 ---
 
 ### Phase: REFACTOR (Session Token Exchange)
-- [ ] [T07] Simplify token module surface, normalize error messages, and finalize exports
+- [x] [T07] Simplify token module surface, normalize error messages, and finalize exports
 ---
 - [ ] **COMMIT**: `refactor: polish token exchange module`
 ---

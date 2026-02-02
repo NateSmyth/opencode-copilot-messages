@@ -43,7 +43,8 @@ export async function authorizeDeviceCode(input?: {
 		scope,
 	})
 	const run = input?.fetch ?? fetch
-	const res = await run(new URL("/login/device/code", base), {
+	const endpoint = new URL("/login/device/code", base)
+	const res = await run(endpoint, {
 		method: "POST",
 		headers: {
 			Accept: "application/json",
@@ -53,8 +54,7 @@ export async function authorizeDeviceCode(input?: {
 	})
 
 	if (!res.ok) {
-		const text = await res.text()
-		throw new Error(`device code request failed (${res.status}): ${text}`)
+		throw new Error(`device code request failed (${res.status}) ${endpoint.pathname}`)
 	}
 
 	return (await res.json()) as DeviceCodeResponse
