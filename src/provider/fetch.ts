@@ -20,7 +20,7 @@ export async function copilotMessagesFetch(
 	const headers = merge(input, init)
 	headers.delete("x-api-key")
 	const messages = await read(init?.body)
-	const initiator = determineInitiator(messages)
+	const initiator = forcedInitiator(headers.get("x-initiator")) ?? determineInitiator(messages)
 	const images = hasImageContent(messages)
 	const copilot = buildHeaders({
 		sessionToken: context.sessionToken,
@@ -69,4 +69,9 @@ function parse(text: string): AnthropicMessage[] {
 	})()
 	if (!parsed || !Array.isArray(parsed.messages)) return []
 	return parsed.messages as AnthropicMessage[]
+}
+
+function forcedInitiator(value: string | null): "user" | "agent" | null {
+	if (value === "user" || value === "agent") return value
+	return null
 }
