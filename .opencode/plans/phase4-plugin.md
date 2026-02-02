@@ -46,7 +46,7 @@
 ---
 
 ### [Phase: REFACTOR] Fetch override support
-- [ ] [T06] Keep fetch wrapper behavior unchanged for callers that do not set `x-initiator`.
+- [x] [T06] Keep fetch wrapper behavior unchanged for callers that do not set `x-initiator`.
 ---
 - [ ] **COMMIT**: `refactor: keep fetch initiator override minimal`
 ---
