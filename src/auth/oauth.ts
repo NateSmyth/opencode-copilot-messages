@@ -5,7 +5,7 @@
  *
  * Flow:
  * 1. POST https://github.com/login/device/code
- *    body: { client_id, scope: "user:email" }
+ *    body: { client_id, scope: "read:user" }  // Minimal scope
  *    returns: { device_code, user_code, verification_uri, expires_in, interval }
  *
  * 2. Poll POST https://github.com/login/oauth/access_token
