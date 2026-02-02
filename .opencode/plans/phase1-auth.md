@@ -24,7 +24,7 @@
 ---
 
 ### Phase: RED (Session Token Exchange)
-- [ ] [T05] Add session token exchange/refresh tests (clock skew, refresh window)
+- [x] [T05] Add session token exchange/refresh tests (clock skew, refresh window)
 ---
 - [ ] **COMMIT**: `test: cover session token exchange and refresh logic`
 ---
