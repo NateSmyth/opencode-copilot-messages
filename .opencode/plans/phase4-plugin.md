@@ -33,7 +33,7 @@
 ---
 
 ### [Phase: RED] Respect explicit `x-initiator` override (required for subagent forcing)
-- [ ] [T04] Extend `src/provider/fetch.test.ts`:
+- [x] [T04] Extend `src/provider/fetch.test.ts`:
   - when caller sets `x-initiator: agent` but body would derive `user`, outgoing request keeps `x-initiator: agent`
 ---
 - [ ] **COMMIT**: `test: allow forced x-initiator override`

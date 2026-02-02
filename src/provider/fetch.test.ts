@@ -97,6 +97,35 @@ describe("copilotMessagesFetch", () => {
 		}
 	})
 
+	it("keeps caller-supplied x-initiator", async () => {
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				expect(req.headers.get("x-initiator")).toBe("agent")
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{
+					method: "POST",
+					headers: { "content-type": "application/json", "x-initiator": "agent" },
+					body,
+				},
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
+		}
+	})
+
 	it("sets Copilot-Vision-Request when images are present", async () => {
 		const server = Bun.serve({
 			port: 0,
