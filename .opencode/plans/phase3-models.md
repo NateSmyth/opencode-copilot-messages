@@ -30,7 +30,7 @@
 ---
 
 ### [Phase: GREEN]
-- [ ] [T05] Implement `mapToOpencodeModel(model: CopilotModel)` in `src/models/registry.ts` to produce:
+- [x] [T05] Implement `mapToOpencodeModel(model: CopilotModel)` in `src/models/registry.ts` to produce:
   ```ts
   {
     id: model.id,
@@ -48,7 +48,7 @@
     },
   }
   ```
-- [ ] [T06] Implement `fetchModels()` in `src/models/registry.ts`:
+- [x] [T06] Implement `fetchModels()` in `src/models/registry.ts`:
   - hits `GET https://api.copilot.com/models` by default (overrideable base `url` + injected `fetch` for tests)
   - uses VSCode headers via `buildHeaders({ sessionToken, initiator: "agent", ... })` and then sets:
     - `x-interaction-type = "model-access"`
@@ -56,7 +56,7 @@
   - parses any of the supported envelopes (T04)
   - filters to `supported_endpoints.includes("/v1/messages")`
   - returns `CopilotModel[]` mapped through `mapToOpencodeModel()`
-- [ ] [T07] Update the docstring in `src/models/registry.ts` to match reality:
+- [x] [T07] Update the docstring in `src/models/registry.ts` to match reality:
   - endpoint is `https://api.copilot.com/models` (not `api.github.com/copilot_internal/v2/models`)
   - keep the `supported_endpoints` filter description
 ---
