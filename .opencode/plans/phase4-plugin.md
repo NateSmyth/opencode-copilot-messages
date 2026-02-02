@@ -52,7 +52,7 @@
 ---
 
 ### [Phase: RED] Plugin hooks: provider registration + subagent initiator (Phase 4)
-- [ ] [T07] Add `src/plugin.test.ts` covering:
+- [x] [T07] Add `src/plugin.test.ts` covering:
   - `config` hook registers provider id `copilot-messages`
   - `chat.headers` sets `x-initiator: agent` **only** when:
     - `input.provider.info.id === "copilot-messages"`, and
