@@ -8,6 +8,8 @@ describe("copilotMessagesFetch", () => {
 			fetch: async (req) => {
 				expect(req.headers.get("x-api-key")).toBe(null)
 				expect(req.headers.get("authorization")).toBe("Bearer session_test")
+				expect(req.headers.get("x-interaction-type")).toBe("messages-proxy")
+				expect(req.headers.get("openai-intent")).toBe("messages-proxy")
 				const agent = req.headers.get("user-agent") ?? ""
 				expect(agent.startsWith("GitHubCopilotChat/")).toBe(true)
 				expect(req.headers.get("x-keep")).toBe("1")
