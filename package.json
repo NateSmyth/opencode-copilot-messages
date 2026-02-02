@@ -12,7 +12,8 @@
 		"LICENSE"
 	],
 	"scripts": {
-		"build": "tsc",
+		"build": "bun run clean:dist && tsc -p tsconfig.build.json",
+		"clean:dist": "bun -e \"import { rm } from 'node:fs/promises'; await rm('dist', { recursive: true, force: true })\"",
 		"typecheck": "tsc --noEmit",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
