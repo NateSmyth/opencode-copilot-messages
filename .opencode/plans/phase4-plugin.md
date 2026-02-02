@@ -27,7 +27,7 @@
 ---
 
 ### [Phase: REFACTOR] Config loading
-- [ ] [T03] Simplify config loader (single-path resolution, minimal parsing helpers, stable errors).
+- [x] [T03] Simplify config loader (single-path resolution, minimal parsing helpers, stable errors).
 ---
 - [ ] **COMMIT**: `refactor: simplify copilot-messages config loader`
 ---
