@@ -1,6 +1,6 @@
 {
-    "$schema": "https://opencode.ai/config.json",
-    "plugin": [
-        "file:///home/nate/Projects/AgentTools/opencode/opencode-copilot-messages/dist/index.js"
-    ]
+	"$schema": "https://opencode.ai/config.json",
+	"plugin": [
+		"file:///home/nate/Projects/AgentTools/opencode/opencode-copilot-messages/dist/index.js"
+	]
 }

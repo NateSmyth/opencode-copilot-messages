@@ -64,13 +64,16 @@ describe("oauth device flow", () => {
 				expect(path).toBe("/login/device/code")
 				expect(req.method).toBe("POST")
 				const type = req.headers.get("content-type") ?? ""
-				expect(type.includes("application/x-www-form-urlencoded")).toBe(true)
+				expect(type.includes("application/json")).toBe(true)
 				const accept = req.headers.get("accept") ?? ""
 				expect(accept.includes("application/json")).toBe(true)
+				// Verify COPILOT_HEADERS are present
+				expect(req.headers.get("user-agent")).toBe("GitHubCopilotChat/0.35.0")
+				expect(req.headers.get("editor-version")).toBe("vscode/1.107.0")
 				const text = await req.text()
-				const params = new URLSearchParams(text)
-				expect(params.get("client_id")).toBe(CLIENT_ID)
-				expect(params.get("scope")).toBe("read:user")
+				const body = JSON.parse(text)
+				expect(body.client_id).toBe(CLIENT_ID)
+				expect(body.scope).toBe("read:user")
 				return Response.json(data)
 			},
 		})

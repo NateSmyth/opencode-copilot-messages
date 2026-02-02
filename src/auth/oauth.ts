@@ -1,5 +1,13 @@
 export const CLIENT_ID = "Iv1.b507a08c87ecfe98"
 
+// Headers that match VSCode Copilot Chat extension
+const COPILOT_HEADERS = {
+	"User-Agent": "GitHubCopilotChat/0.35.0",
+	"Editor-Version": "vscode/1.107.0",
+	"Editor-Plugin-Version": "copilot-chat/0.35.0",
+	"Copilot-Integration-Id": "vscode-chat",
+} as const
+
 export interface DeviceCodeResponse {
 	device_code: string
 	user_code: string
@@ -23,19 +31,19 @@ export async function authorizeDeviceCode(input?: {
 	const base = input?.url ?? "https://github.com"
 	const clientId = input?.clientId ?? CLIENT_ID
 	const scope = input?.scope ?? "read:user"
-	const body = new URLSearchParams({
-		client_id: clientId,
-		scope,
-	})
 	const run = input?.fetch ?? fetch
 	const endpoint = new URL("/login/device/code", base)
 	const res = await run(endpoint, {
 		method: "POST",
 		headers: {
 			Accept: "application/json",
-			"Content-Type": "application/x-www-form-urlencoded",
+			"Content-Type": "application/json",
+			...COPILOT_HEADERS,
 		},
-		body,
+		body: JSON.stringify({
+			client_id: clientId,
+			scope,
+		}),
 	})
 
 	if (!res.ok) {
@@ -72,18 +80,18 @@ export async function pollForToken(input: {
 			throw new Error("expired_token")
 		}
 
-		const body = new URLSearchParams({
-			client_id: clientId,
-			device_code: input.deviceCode,
-			grant_type: "urn:ietf:params:oauth:grant-type:device_code",
-		})
 		const res = await run(endpoint, {
 			method: "POST",
 			headers: {
 				Accept: "application/json",
-				"Content-Type": "application/x-www-form-urlencoded",
+				"Content-Type": "application/json",
+				...COPILOT_HEADERS,
 			},
-			body,
+			body: JSON.stringify({
+				client_id: clientId,
+				device_code: input.deviceCode,
+				grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+			}),
 		})
 		const data = (await res.json()) as
 			| TokenResponse

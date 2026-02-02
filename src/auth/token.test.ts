@@ -63,11 +63,12 @@ describe("session token exchange", () => {
 				const path = new URL(req.url).pathname
 				expect(path).toBe("/copilot_internal/v2/token")
 				const auth = req.headers.get("authorization")
-				expect(auth).toBe("token ghp_test")
-				const version = req.headers.get("x-github-api-version")
-				expect(version).toBe("2025-04-01")
+				expect(auth).toBe("Bearer ghp_test")
 				const accept = req.headers.get("accept") ?? ""
 				expect(accept.includes("application/json")).toBe(true)
+				// Verify COPILOT_HEADERS are present
+				expect(req.headers.get("user-agent")).toBe("GitHubCopilotChat/0.35.0")
+				expect(req.headers.get("editor-version")).toBe("vscode/1.107.0")
 				return Response.json(envelope)
 			},
 		})

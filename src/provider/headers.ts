@@ -17,9 +17,9 @@
  * - Copilot-Vision-Request: true (when images present)
  */
 
-// VSCode version to proxy as
-const VSCODE_VERSION = "1.108.2"
-const COPILOT_CHAT_VERSION = "0.36.2"
+// VSCode version to proxy as (matching reference implementation)
+const VSCODE_VERSION = "1.107.0"
+const COPILOT_CHAT_VERSION = "0.35.0"
 
 export interface HeaderContext {
 	sessionToken: string
