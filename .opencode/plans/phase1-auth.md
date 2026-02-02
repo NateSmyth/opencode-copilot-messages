@@ -12,7 +12,7 @@
 ---
 
 ### Phase: GREEN (Device Code OAuth)
-- [ ] [T03] Implement `authorizeDeviceCode()` and `pollForToken()` with injectable `fetch/sleep/now`
+- [x] [T03] Implement `authorizeDeviceCode()` and `pollForToken()` with injectable `fetch/sleep/now`
 ---
 - [ ] **COMMIT**: `feat: implement device code oauth flow`
 ---
