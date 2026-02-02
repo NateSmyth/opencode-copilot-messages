@@ -23,6 +23,7 @@
 - [x] [T04] Tighten types and minimize parsing/merging duplication in `fetch.ts` + tests (no behavior change)
 ---
 - [ ] **COMMIT**: `refactor: simplify copilot messages fetch wrapper`
+- [x] **COMMIT**: `refactor: simplify copilot messages fetch wrapper`
 ---
 
 ## Summary

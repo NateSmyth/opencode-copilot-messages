@@ -5,7 +5,7 @@
  */
 
 import { buildHeaders } from "./headers"
-import { determineInitiator, hasImageContent, type AnthropicMessage } from "./initiator"
+import { type AnthropicMessage, determineInitiator, hasImageContent } from "./initiator"
 
 export interface FetchContext {
 	sessionToken: string
