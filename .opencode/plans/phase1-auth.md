@@ -30,7 +30,7 @@
 ---
 
 ### Phase: GREEN (Session Token Exchange)
-- [ ] [T06] Implement `exchangeForSessionToken()`, `shouldRefreshToken()`, and `refreshSessionToken()`
+- [x] [T06] Implement `exchangeForSessionToken()`, `shouldRefreshToken()`, and `refreshSessionToken()`
 ---
 - [ ] **COMMIT**: `feat: implement copilot session token exchange`
 ---

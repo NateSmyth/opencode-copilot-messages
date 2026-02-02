@@ -26,6 +26,57 @@ export interface SessionToken {
 	refreshIn: number
 }
 
-// TODO: Implement exchangeForSessionToken()
-// TODO: Implement refreshSessionToken()
-// TODO: Implement parseTokenFields() for structured token parsing
+export async function exchangeForSessionToken(input: {
+	githubToken: string
+	fetch?: typeof fetch
+	url?: string
+	now?: () => number
+}): Promise<SessionToken> {
+	const run = input.fetch ?? fetch
+	const base = input.url ?? "https://api.github.com"
+	const res = await run(new URL("/copilot_internal/v2/token", base), {
+		method: "POST",
+		headers: {
+			Authorization: `token ${input.githubToken}`,
+			Accept: "application/json",
+			"X-GitHub-Api-Version": "2025-04-01",
+		},
+	})
+
+	if (!res.ok) {
+		const text = await res.text()
+		throw new Error(`token exchange failed (${res.status}): ${text}`)
+	}
+
+	const data = (await res.json()) as TokenEnvelope
+	const nowSeconds = Math.floor((input.now ?? Date.now)() / 1000)
+	return {
+		token: data.token,
+		expiresAt: nowSeconds + data.refresh_in + 60,
+		refreshIn: data.refresh_in,
+	}
+}
+
+export function shouldRefreshToken(input: { expiresAt: number; now?: () => number }): boolean {
+	const nowSeconds = Math.floor((input.now ?? Date.now)() / 1000)
+	return input.expiresAt <= nowSeconds + 300
+}
+
+export async function refreshSessionToken(input: {
+	githubToken: string
+	token: SessionToken
+	fetch?: typeof fetch
+	url?: string
+	now?: () => number
+}): Promise<SessionToken> {
+	if (!shouldRefreshToken({ expiresAt: input.token.expiresAt, now: input.now })) {
+		return input.token
+	}
+
+	return exchangeForSessionToken({
+		githubToken: input.githubToken,
+		fetch: input.fetch,
+		url: input.url,
+		now: input.now,
+	})
+}
