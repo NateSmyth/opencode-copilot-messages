@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+# Conventional Commit Validator
+# Enforces: type(scope)?: subject
+# Rejects: multi-line commits (bodies)
+#
+# Philosophy: If a commit can't be understood from its subject alone,
+# it's not atomic enough.
+
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Strip comments (lines starting with #)
+COMMIT_MSG_CLEAN=$(echo "$COMMIT_MSG" | grep -v '^#')
+
+# Count non-empty lines
+LINE_COUNT=$(echo "$COMMIT_MSG_CLEAN" | grep -c '^.')
+
+# Reject multi-line commits (bodies)
+if [ "$LINE_COUNT" -gt 1 ]; then
+    echo "❌ Commit rejected: body detected"
+    echo ""
+    echo "Your commit has $LINE_COUNT lines. Only single-line commits are allowed."
+    echo ""
+    echo "Philosophy: If a commit cannot be understood from its subject alone,"
+    echo "then it's not atomic enough."
+    echo ""
+    exit 1
+fi
+
+# Get the subject line (first non-empty, non-comment line)
+SUBJECT=$(echo "$COMMIT_MSG_CLEAN" | grep '^.' | head -n1)
+
+# Conventional commit pattern: type(scope)?: subject
+# Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_-]+\))?(!)?: .+$'
+
+if ! echo "$SUBJECT" | grep -Eq "$PATTERN"; then
+    echo "❌ Commit rejected: invalid conventional commit format"
+    echo ""
+    echo "Expected: type(scope)?: subject"
+    echo "Got:      $SUBJECT"
+    echo ""
+    echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+    echo ""
+    echo "Examples:"
+    echo "  feat: add user authentication"
+    echo "  fix(auth): resolve token expiry bug"
+    echo "  refactor!: change API response format"
+    echo "  docs(readme): update installation steps"
+    echo ""
+    exit 1
+fi
+
+# Validate subject length (max 72 chars is conventional)
+SUBJECT_LENGTH=${#SUBJECT}
+if [ "$SUBJECT_LENGTH" -gt 72 ]; then
+    echo "❌ Commit rejected: subject too long"
+    echo ""
+    echo "Subject is $SUBJECT_LENGTH chars (max 72)"
+    echo ""
+    echo "Keep it concise. If you need more explanation, the commit isn't atomic enough."
+    echo ""
+    exit 1
+fi
+
+# Reject subjects ending with period
+if echo "$SUBJECT" | grep -Eq '\.$'; then
+    echo "❌ Commit rejected: subject ends with period"
+    echo ""
+    echo "Conventional commits don't end with punctuation."
+    echo ""
+    exit 1
+fi
+
+exit 0
