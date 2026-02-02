@@ -1,3 +1,4 @@
+import type { Hooks, Plugin } from "@opencode-ai/plugin"
 import { authorizeDeviceCode, pollForToken } from "./auth/oauth"
 import { exchangeForSessionToken, refreshSessionToken } from "./auth/token"
 import type { StoredAuth } from "./auth/types"
@@ -17,10 +18,13 @@ import { copilotMessagesFetch } from "./provider/fetch"
  * - Uses @ai-sdk/anthropic (Anthropic Messages API format)
  * - Critical: X-Initiator must check for tool_result content blocks
  */
-export const CopilotMessagesPlugin = async (_input: unknown) => {
+export const CopilotMessagesPlugin: Plugin = async (input) => {
 	const hooks = {
-		config: async (input: { provider: Record<string, unknown> }) => {
-			const providers = input.provider
+		config: async (config: { provider?: Record<string, unknown> }) => {
+			if (!config.provider) {
+				config.provider = {}
+			}
+			const providers = config.provider
 			if (!providers["copilot-messages"]) {
 				providers["copilot-messages"] = {
 					npm: "@ai-sdk/anthropic",
@@ -29,49 +33,52 @@ export const CopilotMessagesPlugin = async (_input: unknown) => {
 				}
 			}
 		},
-		chat: {
-			headers: async (input: {
-				provider: { info: { id: string } }
-				message?: { metadata?: { parentSessionId?: string } }
-			}) => {
-				const isCopilot = input.provider.info.id === "copilot-messages"
-				if (!isCopilot) return
-				const parent = input.message?.metadata?.parentSessionId
-				if (!parent) return
-				return { headers: { "x-initiator": "agent" } }
-			},
+		"chat.headers": async (
+			data: { provider: { info: { id: string } }; message?: { metadata?: { parentSessionId?: string } } },
+			output: { headers: Record<string, string> }
+		) => {
+			const isCopilot = data.provider.info.id === "copilot-messages"
+			if (!isCopilot) return
+			const parent = data.message?.metadata?.parentSessionId
+			if (!parent) return
+			output.headers["x-initiator"] = "agent"
 		},
 		auth: {
 			provider: "copilot-messages",
 			methods: [
 				{
-					name: "oauth",
+					type: "oauth",
 					label: "GitHub OAuth",
 					authorize: async () => {
 						const device = await authorizeDeviceCode()
-						const expiresAt = Math.floor(Date.now() / 1000) + device.expires_in
-						const token = await pollForToken({
-							deviceCode: device.device_code,
-							interval: device.interval,
-							expiresAt,
-						})
-						const session = await exchangeForSessionToken({ githubToken: token.access_token })
 						return {
-							type: "success",
-							refresh: token.access_token,
-							access: session.token,
-							expires: session.expiresAt * 1000,
+							url: device.verification_uri,
+							instructions: `Enter code: ${device.user_code}`,
+							method: "auto",
+							callback: async () => {
+								const expiresAt = Math.floor(Date.now() / 1000) + device.expires_in
+								const token = await pollForToken({
+									deviceCode: device.device_code,
+									interval: device.interval,
+									expiresAt,
+								})
+								const session = await exchangeForSessionToken({
+									githubToken: token.access_token,
+								})
+								return {
+									type: "success",
+									refresh: token.access_token,
+									access: session.token,
+									expires: session.expiresAt * 1000,
+								}
+							},
 						}
 					},
 				},
 			],
-			loader: async (input: {
-				auth: StoredAuth | null
-				provider: { models: Record<string, unknown> }
-				client: { auth: { set: (input: unknown) => Promise<unknown> } }
-			}) => {
+			loader: async (getAuth, provider) => {
 				const config = await loadConfig()
-				const stored = input.auth
+				const stored = (await getAuth()) as StoredAuth | null
 				if (!stored || stored.type !== "oauth") return {}
 				const session = await refreshSessionToken({
 					githubToken: stored.refresh,
@@ -81,23 +88,27 @@ export const CopilotMessagesPlugin = async (_input: unknown) => {
 						refreshIn: 0,
 					},
 				})
-				if (session.token !== stored.access || session.expiresAt * 1000 !== stored.expires) {
+				const nextExpires = session.expiresAt * 1000
+				if (session.token !== stored.access || nextExpires !== stored.expires) {
 					await input.client.auth.set({
 						path: { id: "copilot-messages" },
 						body: {
 							type: "oauth",
 							refresh: stored.refresh,
 							access: session.token,
-							expires: session.expiresAt * 1000,
+							expires: nextExpires,
 						},
 					})
 				}
+				const target = provider as unknown as { models?: Record<string, unknown> }
+				const list = target.models ?? {}
+				target.models = list
 				const models = await fetchModels({
 					sessionToken: session.token,
 					betaFeatures: config.beta_features,
 				})
 				for (const model of models) {
-					input.provider.models[model.id] = model
+					list[model.id] = model
 				}
 				return {
 					apiKey: "",
@@ -110,7 +121,7 @@ export const CopilotMessagesPlugin = async (_input: unknown) => {
 				}
 			},
 		},
-	}
+	} as Hooks
 
 	return hooks
 }

@@ -72,7 +72,7 @@
 ---
 
 ### [Phase: RED] auth.loader: refresh token, fetch/register models, return init config
-- [ ] [T09] Extend `src/plugin.test.ts` with a loader-focused test that (no real network):
+- [x] [T09] Extend `src/plugin.test.ts` with a loader-focused test that (no real network):
   - provides OAuth auth (`{ type: "oauth", refresh, access, expires }`)
   - uses a local `Bun.serve()` server to validate the returned `fetch` behavior (strips `x-api-key`, injects `authorization: Bearer <session>`, preserves caller headers)
   - asserts `provider.models` is populated from registry results
@@ -85,11 +85,11 @@
 ---
 
 ### [Phase: GREEN] auth.loader + auth.methods
-- [ ] [T10] Implement `auth.methods` in `src/plugin.ts` (device code OAuth) using the already-tested building blocks:
+- [x] [T10] Implement `auth.methods` in `src/plugin.ts` (device code OAuth) using the already-tested building blocks:
   - `authorizeDeviceCode()` + `pollForToken()` to obtain GitHub OAuth token
   - `exchangeForSessionToken()` to obtain Copilot session token
   - return `{ type: "success", refresh: <github>, access: <session>, expires: <ms epoch> }` in the `authorize` callback
-- [ ] [T11] Implement `auth.loader` in `src/plugin.ts`:
+- [x] [T11] Implement `auth.loader` in `src/plugin.ts`:
   - read plugin config via `loadConfig()` and pass `beta_features` to:
     - `fetchModels({ sessionToken, betaFeatures })`
     - returned `fetch` wrapper (`copilotMessagesFetch(..., { sessionToken, betaFeatures })`)
