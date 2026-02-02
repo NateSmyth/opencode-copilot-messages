@@ -35,13 +35,13 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 		},
 		"chat.headers": async (
 			data: {
-				provider: { info: { id: string } }
+				provider?: { info?: { id?: string } }
 				message?: { metadata?: { parentSessionId?: string } }
 			},
 			output: { headers: Record<string, string> }
 		) => {
-			const isCopilot = data.provider.info.id === "copilot-messages"
-			if (!isCopilot) return
+			const id = data.provider?.info?.id
+			if (id !== "copilot-messages") return
 			const parent = data.message?.metadata?.parentSessionId
 			if (!parent) return
 			output.headers["x-initiator"] = "agent"
