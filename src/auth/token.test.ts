@@ -24,6 +24,7 @@ async function load() {
 		exchangeForSessionToken?: Exchange
 		shouldRefreshToken?: (input: { expiresAt: number; now?: () => number }) => boolean
 		refreshSessionToken?: Refresh
+		parseTokenExpiration?: (token: string) => number | null
 	}
 
 	if (typeof token.exchangeForSessionToken !== "function") {
@@ -38,22 +39,47 @@ async function load() {
 		throw new Error("refreshSessionToken not implemented")
 	}
 
+	// Optional for now until implemented
+	// if (typeof token.parseTokenExpiration !== "function") {
+	// 	throw new Error("parseTokenExpiration not implemented")
+	// }
+
 	return {
 		exchange: token.exchangeForSessionToken,
 		shouldRefresh: token.shouldRefreshToken,
 		refresh: token.refreshSessionToken,
+		parseExpiration: token.parseTokenExpiration,
 	}
 }
+
+describe("session token parsing", () => {
+	it("parseTokenExpiration() extracts exp value", async () => {
+		const { parseExpiration } = await load()
+		if (!parseExpiration) throw new Error("parseExpiration not implemented")
+
+		expect(parseExpiration("tid=1;exp=1234567890;foo=bar")).toBe(1234567890)
+		expect(parseExpiration("exp=1234567890;foo=bar")).toBe(1234567890)
+		expect(parseExpiration("foo=bar;exp=1234567890")).toBe(1234567890)
+	})
+
+	it("parseTokenExpiration() returns null for invalid/missing exp", async () => {
+		const { parseExpiration } = await load()
+		if (!parseExpiration) throw new Error("parseExpiration not implemented")
+
+		expect(parseExpiration("tid=1;foo=bar")).toBe(null)
+		expect(parseExpiration("exp=invalid")).toBe(null)
+	})
+})
 
 describe("session token exchange", () => {
 	const base = 1_700_000_000_000
 	const now = () => base
 	const nowSeconds = Math.floor(base / 1000)
 
-	it("exchangeForSessionToken() sends required headers and adjusts expiry", async () => {
+	it("exchangeForSessionToken() sends required headers and uses envelope.expires_at", async () => {
 		const envelope: TokenEnvelope = {
 			token: "tid=1;exp=999:mac",
-			expires_at: 999,
+			expires_at: nowSeconds + 1234, // Explicit expiration
 			refresh_in: 120,
 		}
 
@@ -83,7 +109,7 @@ describe("session token exchange", () => {
 		server.stop()
 		expect(res.token).toBe(envelope.token)
 		expect(res.refreshIn).toBe(envelope.refresh_in)
-		expect(res.expiresAt).toBe(nowSeconds + 120 + 60)
+		expect(res.expiresAt).toBe(envelope.expires_at) // Should use envelope.expires_at
 	})
 
 	it("shouldRefreshToken() returns false outside 5-minute window", async () => {
@@ -126,7 +152,7 @@ describe("session token exchange", () => {
 		}
 		const envelope: TokenEnvelope = {
 			token: "tid=2;exp=999:mac",
-			expires_at: 999,
+			expires_at: nowSeconds + 2000,
 			refresh_in: 180,
 		}
 
@@ -145,7 +171,6 @@ describe("session token exchange", () => {
 		})
 		server.stop()
 		expect(res.token).toBe(envelope.token)
-		const expected = nowSeconds + envelope.refresh_in + 60
-		expect(res.expiresAt).toBe(expected)
+		expect(res.expiresAt).toBe(envelope.expires_at)
 	})
 })
