@@ -68,8 +68,8 @@ describe("oauth device flow", () => {
 				const accept = req.headers.get("accept") ?? ""
 				expect(accept.includes("application/json")).toBe(true)
 				// Verify COPILOT_HEADERS are present
-				expect(req.headers.get("user-agent")).toBe("GitHubCopilotChat/0.35.0")
-				expect(req.headers.get("editor-version")).toBe("vscode/1.107.0")
+				expect(req.headers.get("user-agent")).toBe("GitHubCopilotChat/0.36.2")
+				expect(req.headers.get("editor-version")).toBe("vscode/1.108.2")
 				const text = await req.text()
 				const body = JSON.parse(text)
 				expect(body.client_id).toBe(CLIENT_ID)

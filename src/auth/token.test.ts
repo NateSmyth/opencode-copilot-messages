@@ -123,8 +123,8 @@ describe("session token exchange", () => {
 				const accept = req.headers.get("accept") ?? ""
 				expect(accept.includes("application/json")).toBe(true)
 				// Verify COPILOT_HEADERS are present
-				expect(req.headers.get("user-agent")).toBe("GitHubCopilotChat/0.35.0")
-				expect(req.headers.get("editor-version")).toBe("vscode/1.107.0")
+				expect(req.headers.get("user-agent")).toBe("GitHubCopilotChat/0.36.2")
+				expect(req.headers.get("editor-version")).toBe("vscode/1.108.2")
 				return Response.json(envelope)
 			},
 		})

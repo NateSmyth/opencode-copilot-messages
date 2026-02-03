@@ -1,5 +1,5 @@
-export const VSCODE_VERSION = "1.107.0"
-export const COPILOT_CHAT_VERSION = "0.35.0"
+export const VSCODE_VERSION = "1.108.2"
+export const COPILOT_CHAT_VERSION = "0.36.2"
 
 export const COPILOT_HEADERS = {
 	"User-Agent": `GitHubCopilotChat/${COPILOT_CHAT_VERSION}`,
