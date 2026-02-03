@@ -81,8 +81,17 @@ export async function exchangeForSessionToken(input: {
 	}
 }
 
-export function shouldRefreshToken(input: { expiresAt: number; now?: () => number }): boolean {
+export function shouldRefreshToken(input: {
+	expiresAt: number
+	token?: string
+	now?: () => number
+}): boolean {
 	const nowSeconds = Math.floor((input.now ?? Date.now)() / 1000)
+	// If token's embedded exp is already expired, force refresh
+	if (input.token) {
+		const exp = parseTokenExpiration(input.token)
+		if (exp !== null && exp <= nowSeconds) return true
+	}
 	return input.expiresAt <= nowSeconds + 300
 }
 
@@ -93,7 +102,13 @@ export async function refreshSessionToken(input: {
 	url?: string
 	now?: () => number
 }): Promise<SessionToken> {
-	if (!shouldRefreshToken({ expiresAt: input.token.expiresAt, now: input.now })) {
+	if (
+		!shouldRefreshToken({
+			expiresAt: input.token.expiresAt,
+			token: input.token.token,
+			now: input.now,
+		})
+	) {
 		return input.token
 	}
 

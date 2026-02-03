@@ -22,7 +22,11 @@ type Refresh = (input: RefreshInput) => Promise<SessionToken>
 async function load() {
 	const token = (await import("./token")) as {
 		exchangeForSessionToken?: Exchange
-		shouldRefreshToken?: (input: { expiresAt: number; now?: () => number }) => boolean
+		shouldRefreshToken?: (input: {
+			expiresAt: number
+			token?: string
+			now?: () => number
+		}) => boolean
 		refreshSessionToken?: Refresh
 		parseTokenExpiration?: (token: string) => number | null
 	}
@@ -174,9 +178,17 @@ describe("session token exchange", () => {
 		expect(shouldRefresh({ expiresAt: nowSeconds + 1, now })).toBe(true)
 	})
 
+	it("shouldRefreshToken() forces refresh when token exp is already expired", async () => {
+		const { shouldRefresh } = await load()
+		const expiredToken = `tid=1;exp=${nowSeconds - 100}` // exp is 100 seconds ago
+		// Even though expiresAt says 10 minutes in the future, token's exp is expired
+		expect(shouldRefresh({ expiresAt: nowSeconds + 600, token: expiredToken, now })).toBe(true)
+	})
+
 	it("refreshSessionToken() returns same token when not due", async () => {
+		const futureExp = nowSeconds + 600 // Token exp is well in the future
 		const original: SessionToken = {
-			token: "tid=1;exp=999:mac",
+			token: `tid=1;exp=${futureExp}`,
 			expiresAt: nowSeconds + 301,
 			refreshIn: 120,
 		}
