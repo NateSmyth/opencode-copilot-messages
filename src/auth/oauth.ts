@@ -1,4 +1,4 @@
-import { COPILOT_HEADERS } from "../provider/headers"
+import { COPILOT_HEADERS } from "./headers"
 
 export const CLIENT_ID = "Iv1.b507a08c87ecfe98"
 

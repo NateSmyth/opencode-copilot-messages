@@ -8,6 +8,7 @@
  */
 
 import type { Model } from "@opencode-ai/sdk"
+import { COPILOT_CHAT_VERSION, VSCODE_VERSION } from "../auth/headers"
 import { getBaseUrlFromToken } from "../auth/token"
 
 export interface CopilotModel {
@@ -104,8 +105,6 @@ type FetchInput = {
 }
 
 const MESSAGES_ENDPOINT = "/v1/messages"
-const VSCODE_VERSION = "1.107.0"
-const COPILOT_CHAT_VERSION = "0.35.0"
 
 function parseModels(value: unknown): CopilotModel[] {
 	if (Array.isArray(value)) return value

@@ -1,4 +1,4 @@
-import { COPILOT_HEADERS } from "../provider/headers"
+import { COPILOT_HEADERS } from "./headers"
 
 export interface TokenEnvelope {
 	token: string
