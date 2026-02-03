@@ -1,41 +1,73 @@
-import { describe, expect, it } from "bun:test"
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { loadConfig } from "./schema"
 
-async function remove(path: string): Promise<void> {
-	const file = Bun.file(path)
-	const exists = await file.exists()
-	if (!exists) return
+const path = `${Bun.env.HOME ?? ""}/.config/opencode/copilot-messages.json`
+const dir = `${Bun.env.HOME ?? ""}/.config/opencode`
+
+async function remove(): Promise<void> {
 	await Bun.spawn(["rm", "-f", path]).exited
 }
 
-async function write(path: string, data: unknown): Promise<void> {
-	await Bun.spawn(["mkdir", "-p", `${Bun.env.HOME ?? ""}/.config/opencode`]).exited
+async function prepare(): Promise<void> {
+	await Bun.spawn(["mkdir", "-p", dir]).exited
+}
+
+async function save(data: unknown): Promise<void> {
+	await prepare()
 	await Bun.write(path, JSON.stringify(data))
 }
 
+async function raw(text: string): Promise<void> {
+	await prepare()
+	await Bun.write(path, text)
+}
+
 describe("loadConfig", () => {
+	beforeEach(async () => {
+		await remove()
+	})
+
+	afterEach(async () => {
+		await remove()
+	})
+
 	it("returns defaults when file missing", async () => {
-		const path = `${Bun.env.HOME ?? ""}/.config/opencode/copilot-messages.json`
-		await remove(path)
+		const res = await loadConfig()
+		expect(res).toEqual({ debug: false })
+	})
+
+	it("returns defaults when file empty", async () => {
+		await raw("\n\t  ")
 		const res = await loadConfig()
 		expect(res).toEqual({ debug: false })
 	})
 
 	it("applies defaults when partial config provided", async () => {
-		const path = `${Bun.env.HOME ?? ""}/.config/opencode/copilot-messages.json`
-		await remove(path)
-		await write(path, { beta_features: ["foo"] })
+		await save({ beta_features: ["foo"] })
 		const res = await loadConfig()
 		expect(res).toEqual({ beta_features: ["foo"], debug: false })
-		await remove(path)
 	})
 
-	it("rejects invalid ranges", async () => {
-		const path = `${Bun.env.HOME ?? ""}/.config/opencode/copilot-messages.json`
-		await remove(path)
-		await write(path, { thinking_budget: 1 })
-		const run = loadConfig()
-		await expect(run).rejects.toThrow()
-		await remove(path)
+	it("accepts thinking_budget boundaries", async () => {
+		await save({ thinking_budget: 1024 })
+		const min = await loadConfig()
+		expect(min).toEqual({ thinking_budget: 1024, debug: false })
+
+		await save({ thinking_budget: 32000 })
+		const max = await loadConfig()
+		expect(max).toEqual({ thinking_budget: 32000, debug: false })
+	})
+
+	it("rejects thinking_budget outside boundaries", async () => {
+		await save({ thinking_budget: 1023 })
+		await expect(loadConfig()).rejects.toThrow()
+
+		await save({ thinking_budget: 32001 })
+		await expect(loadConfig()).rejects.toThrow()
+	})
+
+	it("rejects malformed JSON", async () => {
+		await raw("{not-json")
+		await expect(loadConfig()).rejects.toThrow()
 	})
 })
