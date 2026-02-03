@@ -1,10 +1,4 @@
-// Headers that match VSCode Copilot Chat extension
-const COPILOT_HEADERS = {
-	"User-Agent": "GitHubCopilotChat/0.35.0",
-	"Editor-Version": "vscode/1.107.0",
-	"Editor-Plugin-Version": "copilot-chat/0.35.0",
-	"Copilot-Integration-Id": "vscode-chat",
-} as const
+import { COPILOT_HEADERS } from "../provider/headers"
 
 export interface TokenEnvelope {
 	token: string
@@ -16,6 +10,17 @@ export interface SessionToken {
 	token: string
 	expiresAt: number
 	refreshIn: number
+}
+
+/**
+ * Parse the expiration timestamp from a Copilot token.
+ * Token format: tid=...;exp=1234567890;...
+ */
+export function parseTokenExpiration(token: string): number | null {
+	const match = token.match(/exp=([^;]+)/)
+	if (!match) return null
+	const exp = Number.parseInt(match[1], 10)
+	return Number.isNaN(exp) ? null : exp
 }
 
 /**
@@ -55,10 +60,22 @@ export async function exchangeForSessionToken(input: {
 	}
 
 	const data = (await res.json()) as TokenEnvelope
-	const nowSeconds = Math.floor((input.now ?? Date.now)() / 1000)
+
+	// Prefer envelope expiration, fallback to parsing token, then fallback to calculation
+	let expiresAt = data.expires_at
+	if (!expiresAt) {
+		const parsed = parseTokenExpiration(data.token)
+		if (parsed) {
+			expiresAt = parsed
+		} else {
+			const nowSeconds = Math.floor((input.now ?? Date.now)() / 1000)
+			expiresAt = nowSeconds + data.refresh_in + 60
+		}
+	}
+
 	return {
 		token: data.token,
-		expiresAt: nowSeconds + data.refresh_in + 60,
+		expiresAt,
 		refreshIn: data.refresh_in,
 	}
 }
@@ -85,4 +102,18 @@ export async function refreshSessionToken(input: {
 		url: input.url,
 		now: input.now,
 	})
+}
+
+/**
+ * Ensures a valid session token for a request.
+ * Call this before every request to the Copilot API to handle token refresh automatically.
+ */
+export async function ensureFreshToken(input: {
+	token: SessionToken
+	githubToken: string
+	fetch?: typeof fetch
+	url?: string
+	now?: () => number
+}): Promise<SessionToken> {
+	return refreshSessionToken(input)
 }

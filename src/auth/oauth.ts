@@ -1,12 +1,6 @@
-export const CLIENT_ID = "Iv1.b507a08c87ecfe98"
+import { COPILOT_HEADERS } from "../provider/headers"
 
-// Headers that match VSCode Copilot Chat extension
-const COPILOT_HEADERS = {
-	"User-Agent": "GitHubCopilotChat/0.35.0",
-	"Editor-Version": "vscode/1.107.0",
-	"Editor-Plugin-Version": "copilot-chat/0.35.0",
-	"Copilot-Integration-Id": "vscode-chat",
-} as const
+export const CLIENT_ID = "Iv1.b507a08c87ecfe98"
 
 export interface DeviceCodeResponse {
 	device_code: string
