@@ -69,6 +69,31 @@ describe("session token parsing", () => {
 		expect(parseExpiration("tid=1;foo=bar")).toBe(null)
 		expect(parseExpiration("exp=invalid")).toBe(null)
 	})
+
+	it("parseTokenExpiration() does not match noexp or similar prefixes", async () => {
+		const { parseExpiration } = await load()
+		if (!parseExpiration) throw new Error("parseExpiration not implemented")
+
+		expect(parseExpiration("noexp=123")).toBe(null)
+		expect(parseExpiration("tid=1;noexp=123")).toBe(null)
+		expect(parseExpiration("tid=1;tokenexp=123")).toBe(null)
+	})
+
+	it("parseTokenExpiration() handles MAC suffix after exp value", async () => {
+		const { parseExpiration } = await load()
+		if (!parseExpiration) throw new Error("parseExpiration not implemented")
+
+		expect(parseExpiration("tid=1;exp=1234567890:mac")).toBe(1234567890)
+		expect(parseExpiration("exp=999:somemac;foo=bar")).toBe(999)
+	})
+
+	it("parseTokenExpiration() rejects zero and negative values", async () => {
+		const { parseExpiration } = await load()
+		if (!parseExpiration) throw new Error("parseExpiration not implemented")
+
+		expect(parseExpiration("exp=0")).toBe(null)
+		expect(parseExpiration("exp=-1")).toBe(null)
+	})
 })
 
 describe("session token exchange", () => {

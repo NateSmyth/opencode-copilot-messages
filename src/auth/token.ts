@@ -14,13 +14,14 @@ export interface SessionToken {
 
 /**
  * Parse the expiration timestamp from a Copilot token.
- * Token format: tid=...;exp=1234567890;...
+ * Token format: tid=...;exp=1234567890;... or tid=...;exp=1234567890:mac;...
  */
 export function parseTokenExpiration(token: string): number | null {
-	const match = token.match(/exp=([^;]+)/)
+	const match = token.match(/(?:^|;)exp=([^;:]+)/)
 	if (!match) return null
-	const exp = Number.parseInt(match[1], 10)
-	return Number.isNaN(exp) ? null : exp
+	const value = Number(match[1])
+	if (!Number.isFinite(value) || value <= 0) return null
+	return Math.floor(value)
 }
 
 /**
