@@ -214,4 +214,56 @@ describe("copilotMessagesFetch", () => {
 			server.stop()
 		}
 	})
+
+	it("forces agent initiator for title generator system prompt", async () => {
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				expect(req.headers.get("x-initiator")).toBe("agent")
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			system: "You are a title generator. Provide a short title.",
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{ method: "POST", headers: { "content-type": "application/json" }, body },
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
+		}
+	})
+
+	it("forces agent initiator for array-style title generator system prompt", async () => {
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				expect(req.headers.get("x-initiator")).toBe("agent")
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			system: [{ type: "text", text: "You are a title generator. Provide a short title." }],
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{ method: "POST", headers: { "content-type": "application/json" }, body },
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
+		}
+	})
 })
