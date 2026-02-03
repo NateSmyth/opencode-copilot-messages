@@ -61,17 +61,13 @@ export async function exchangeForSessionToken(input: {
 
 	const data = (await res.json()) as TokenEnvelope
 
-	// Prefer envelope expiration, fallback to parsing token, then fallback to calculation
-	let expiresAt = data.expires_at
-	if (!expiresAt) {
+	const expiresAt = (() => {
+		if (data.expires_at) return data.expires_at
 		const parsed = parseTokenExpiration(data.token)
-		if (parsed) {
-			expiresAt = parsed
-		} else {
-			const nowSeconds = Math.floor((input.now ?? Date.now)() / 1000)
-			expiresAt = nowSeconds + data.refresh_in + 60
-		}
-	}
+		if (parsed) return parsed
+		const nowSeconds = Math.floor((input.now ?? Date.now)() / 1000)
+		return nowSeconds + data.refresh_in + 60
+	})()
 
 	return {
 		token: data.token,
