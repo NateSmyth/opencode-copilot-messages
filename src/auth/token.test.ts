@@ -102,9 +102,10 @@ describe("session token exchange", () => {
 	const nowSeconds = Math.floor(base / 1000)
 
 	it("exchangeForSessionToken() sends required headers and uses envelope.expires_at", async () => {
+		const expTime = nowSeconds + 2000 // exp is later than expires_at, so expires_at wins
 		const envelope: TokenEnvelope = {
-			token: "tid=1;exp=999:mac",
-			expires_at: nowSeconds + 1234, // Explicit expiration
+			token: `tid=1;exp=${expTime}`,
+			expires_at: nowSeconds + 1234, // Explicit expiration (earlier than exp)
 			refresh_in: 120,
 		}
 
@@ -135,6 +136,30 @@ describe("session token exchange", () => {
 		expect(res.token).toBe(envelope.token)
 		expect(res.refreshIn).toBe(envelope.refresh_in)
 		expect(res.expiresAt).toBe(envelope.expires_at) // Should use envelope.expires_at
+	})
+
+	it("exchangeForSessionToken() clamps expiresAt to token exp when exp is earlier", async () => {
+		const tokenExp = nowSeconds + 500
+		const envelope: TokenEnvelope = {
+			token: `tid=1;exp=${tokenExp}`,
+			expires_at: nowSeconds + 1000, // Envelope says 1000s, but token says 500s
+			refresh_in: 120,
+		}
+
+		const server = Bun.serve({
+			port: 0,
+			fetch: async () => Response.json(envelope),
+		})
+
+		const { exchange } = await load()
+		const res = await exchange({
+			githubToken: "ghp_test",
+			url: `http://127.0.0.1:${server.port}`,
+			now,
+			fetch,
+		})
+		server.stop()
+		expect(res.expiresAt).toBe(tokenExp) // Should clamp to the earlier exp
 	})
 
 	it("shouldRefreshToken() returns false outside 5-minute window", async () => {
@@ -175,8 +200,9 @@ describe("session token exchange", () => {
 			expiresAt: nowSeconds + 1,
 			refreshIn: 120,
 		}
+		const newExp = nowSeconds + 2000
 		const envelope: TokenEnvelope = {
-			token: "tid=2;exp=999:mac",
+			token: `tid=2;exp=${newExp}`,
 			expires_at: nowSeconds + 2000,
 			refresh_in: 180,
 		}
