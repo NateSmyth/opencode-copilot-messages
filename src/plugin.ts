@@ -1,7 +1,12 @@
 import type { Hooks, Plugin } from "@opencode-ai/plugin"
 import type { Model } from "@opencode-ai/sdk"
 import { authorizeDeviceCode, pollForToken } from "./auth/oauth"
-import { exchangeForSessionToken, getBaseUrlFromToken, refreshSessionToken } from "./auth/token"
+import {
+	ensureFreshToken,
+	exchangeForSessionToken,
+	getBaseUrlFromToken,
+	refreshSessionToken,
+} from "./auth/token"
 import type { StoredAuth } from "./auth/types"
 import { loadConfig } from "./config/schema"
 import { fetchModels } from "./models/registry"
@@ -86,7 +91,7 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				const config = await loadConfig()
 				const stored = (await getAuth()) as StoredAuth | null
 				if (!stored || stored.type !== "oauth") return {}
-				const session = await refreshSessionToken({
+				let session = await refreshSessionToken({
 					githubToken: stored.refresh,
 					token: {
 						token: stored.access,
@@ -125,11 +130,30 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				return {
 					apiKey: "",
 					baseURL: `${baseURL}/v1`,
-					fetch: (req: Request | string | URL, init?: RequestInit) =>
-						copilotMessagesFetch(req, init, {
+					fetch: async (req: Request | string | URL, init?: RequestInit) => {
+						const fresh = await ensureFreshToken({
+							githubToken: stored.refresh,
+							token: session,
+						})
+
+						if (fresh.token !== session.token) {
+							session = fresh
+							await input.client.auth.set({
+								path: { id: "copilot-messages" },
+								body: {
+									type: "oauth",
+									refresh: stored.refresh,
+									access: session.token,
+									expires: session.expiresAt * 1000,
+								},
+							})
+						}
+
+						return copilotMessagesFetch(req, init, {
 							sessionToken: session.token,
 							betaFeatures: config.beta_features,
-						}),
+						})
+					},
 				}
 			},
 		},
