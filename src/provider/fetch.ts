@@ -9,7 +9,6 @@ import { type AnthropicMessage, determineInitiator, hasImageContent } from "./in
 
 export interface FetchContext {
 	sessionToken: string
-	betaFeatures?: string[]
 }
 
 export async function copilotMessagesFetch(
@@ -28,7 +27,6 @@ export async function copilotMessagesFetch(
 		sessionToken: context.sessionToken,
 		initiator,
 		hasImages: images,
-		betaFeatures: context.betaFeatures,
 	})
 
 	for (const [key, value] of Object.entries(copilot)) {

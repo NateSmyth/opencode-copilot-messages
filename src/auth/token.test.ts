@@ -43,11 +43,6 @@ async function load() {
 		throw new Error("refreshSessionToken not implemented")
 	}
 
-	// Optional for now until implemented
-	// if (typeof token.parseTokenExpiration !== "function") {
-	// 	throw new Error("parseTokenExpiration not implemented")
-	// }
-
 	return {
 		exchange: token.exchangeForSessionToken,
 		shouldRefresh: token.shouldRefreshToken,

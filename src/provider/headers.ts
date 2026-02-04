@@ -23,7 +23,6 @@ export interface HeaderContext {
 	sessionToken: string
 	initiator: "user" | "agent"
 	hasImages?: boolean
-	betaFeatures?: string[]
 	interaction?: string
 	intent?: string
 }
@@ -40,11 +39,8 @@ export function buildHeaders(context: HeaderContext): Record<string, string> {
 		"openai-intent": context.intent ?? "messages-proxy",
 		"x-github-api-version": "2025-10-01",
 		"x-initiator": context.initiator,
+		"anthropic-beta": "interleaved-thinking-2025-05-14",
 	}
-
-	// Add anthropic-beta header with thinking support
-	const betas = ["interleaved-thinking-2025-05-14", ...(context.betaFeatures ?? [])]
-	headers["anthropic-beta"] = betas.join(",")
 
 	// Add vision header if images present
 	if (context.hasImages) {

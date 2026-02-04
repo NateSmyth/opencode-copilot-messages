@@ -101,7 +101,6 @@ type FetchInput = {
 	sessionToken: string
 	fetch?: typeof fetch
 	url?: string
-	betaFeatures?: string[]
 }
 
 const MESSAGES_ENDPOINT = "/v1/messages"

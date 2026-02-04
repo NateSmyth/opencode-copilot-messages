@@ -8,7 +8,6 @@ import {
 	refreshSessionToken,
 } from "./auth/token"
 import type { StoredAuth } from "./auth/types"
-import { loadConfig } from "./config/schema"
 import { fetchModels } from "./models/registry"
 import { copilotMessagesFetch } from "./provider/fetch"
 
@@ -88,7 +87,6 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				},
 			],
 			loader: async (getAuth, provider) => {
-				const config = await loadConfig()
 				const stored = (await getAuth()) as StoredAuth | null
 				if (!stored || stored.type !== "oauth") return {}
 				let session = await refreshSessionToken({
@@ -116,7 +114,6 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				target.models = list
 				const models = await fetchModels({
 					sessionToken: session.token,
-					betaFeatures: config.beta_features,
 				})
 				for (const model of models) {
 					const existing = list[model.id]
@@ -151,7 +148,6 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 
 						return copilotMessagesFetch(req, init, {
 							sessionToken: session.token,
-							betaFeatures: config.beta_features,
 						})
 					},
 				}
