@@ -42,15 +42,23 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 		},
 		"chat.headers": async (
 			data: {
+				sessionID: string
+				model: { providerID: string }
 				provider?: { info?: { id?: string } }
-				message?: { metadata?: { parentSessionId?: string } }
 			},
 			output: { headers: Record<string, string> }
 		) => {
-			const id = data.provider?.info?.id
-			if (id !== "copilot-messages") return
-			const parent = data.message?.metadata?.parentSessionId
-			if (!parent) return
+			const providerID = data.model.providerID
+			if (providerID !== "copilot-messages") return
+			const session = await input.client.session
+				.get({
+					path: {
+						id: data.sessionID,
+					},
+					throwOnError: true,
+				})
+				.catch(() => undefined)
+			if (!session?.data?.parentID) return
 			output.headers["x-initiator"] = "agent"
 		},
 		auth: {

@@ -6,7 +6,22 @@ type ModelWithVariants = Model & { variants?: Record<string, unknown> }
 
 describe("CopilotMessagesPlugin hooks", () => {
 	it("registers provider and sets initiator for subagents", async () => {
-		const hooks = (await CopilotMessagesPlugin({} as never)) as unknown as {
+		const hooks = (await CopilotMessagesPlugin({
+			client: {
+				session: {
+					get: async (input: unknown) => {
+						if (!input || typeof input !== "object") return { data: {} }
+						if (!("path" in input) || !input.path || typeof input.path !== "object") {
+							return { data: {} }
+						}
+						if (!("id" in input.path) || typeof input.path.id !== "string") {
+							return { data: {} }
+						}
+						return { data: input.path.id === "child" ? { parentID: "parent" } : {} }
+					},
+				},
+			},
+		} as never)) as unknown as {
 			config?: (input: unknown) => Promise<void>
 			"chat.headers"?: (
 				input: unknown,
@@ -27,8 +42,11 @@ describe("CopilotMessagesPlugin hooks", () => {
 		})
 
 		const headersInput = {
+			sessionID: "child",
+			agent: "agent",
+			model: { providerID: "copilot-messages" },
 			provider: { info: { id: "copilot-messages" } },
-			message: { metadata: { parentSessionId: "parent" } },
+			message: {} as never,
 		}
 		const headersRes = { headers: {} as Record<string, string> }
 		await hooks["chat.headers"](headersInput as never, headersRes)
@@ -37,8 +55,11 @@ describe("CopilotMessagesPlugin hooks", () => {
 		const otherRes = { headers: {} as Record<string, string> }
 		await hooks["chat.headers"](
 			{
+				sessionID: "child",
+				agent: "agent",
+				model: { providerID: "other" },
 				provider: { info: { id: "other" } },
-				message: { metadata: { parentSessionId: "parent" } },
+				message: {} as never,
 			} as never,
 			otherRes
 		)
@@ -47,8 +68,11 @@ describe("CopilotMessagesPlugin hooks", () => {
 		const userRes = { headers: {} as Record<string, string> }
 		await hooks["chat.headers"](
 			{
+				sessionID: "root",
+				agent: "agent",
+				model: { providerID: "copilot-messages" },
 				provider: { info: { id: "copilot-messages" } },
-				message: { metadata: {} },
+				message: {} as never,
 			} as never,
 			userRes
 		)
