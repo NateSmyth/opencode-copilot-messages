@@ -31,6 +31,11 @@ fi
 # Get the subject line (first non-empty, non-comment line)
 SUBJECT=$(echo "$COMMIT_MSG_CLEAN" | grep '^.' | head -n1)
 
+# Allow version commits from npm version (e.g., "0.1.1" or "v0.1.1")
+if echo "$SUBJECT" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+    exit 0
+fi
+
 # Conventional commit pattern: type(scope)?: subject
 # Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
 PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_-]+\))?(!)?: .+$'
