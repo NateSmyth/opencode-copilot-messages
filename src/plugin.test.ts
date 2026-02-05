@@ -17,7 +17,9 @@ describe("CopilotMessagesPlugin hooks", () => {
 						if (!("id" in input.path) || typeof input.path.id !== "string") {
 							return { data: {} }
 						}
-						return { data: input.path.id === "child" ? { parentID: "parent" } : {} }
+						return {
+							data: input.path.id === "child" ? { parentID: "parent" } : {},
+						}
 					},
 				},
 			},
@@ -258,12 +260,18 @@ describe("CopilotMessagesPlugin hooks", () => {
 			expect(merged.headers["x-test"]).toBe("1")
 			expect(merged.variants?.custom).toEqual(existingModel.variants?.custom)
 
-			const body = JSON.stringify({ messages: [{ role: "user", content: "hi" }] })
+			const body = JSON.stringify({
+				messages: [{ role: "user", content: "hi" }],
+			})
 			await (res.fetch as (req: string, init: RequestInit) => Promise<Response>)(
 				`${base}/v1/messages`,
 				{
 					method: "POST",
-					headers: { "content-type": "application/json", "x-api-key": "k", "x-keep": "1" },
+					headers: {
+						"content-type": "application/json",
+						"x-api-key": "k",
+						"x-keep": "1",
+					},
 					body,
 				}
 			)

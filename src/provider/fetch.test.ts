@@ -58,7 +58,11 @@ describe("copilotMessagesFetch", () => {
 		try {
 			const res = await copilotMessagesFetch(
 				url,
-				{ method: "POST", headers: { "content-type": "application/json" }, body },
+				{
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body,
+				},
 				{ sessionToken: "session_test" }
 			)
 			expect(res.ok).toBe(true)
@@ -91,7 +95,11 @@ describe("copilotMessagesFetch", () => {
 		try {
 			const res = await copilotMessagesFetch(
 				url,
-				{ method: "POST", headers: { "content-type": "application/json" }, body },
+				{
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body,
+				},
 				{ sessionToken: "session_test" }
 			)
 			expect(res.ok).toBe(true)
@@ -118,7 +126,10 @@ describe("copilotMessagesFetch", () => {
 				url,
 				{
 					method: "POST",
-					headers: { "content-type": "application/json", "x-initiator": "agent" },
+					headers: {
+						"content-type": "application/json",
+						"x-initiator": "agent",
+					},
 					body,
 				},
 				{ sessionToken: "session_test" }
@@ -159,7 +170,11 @@ describe("copilotMessagesFetch", () => {
 		try {
 			const res = await copilotMessagesFetch(
 				url,
-				{ method: "POST", headers: { "content-type": "application/json" }, body },
+				{
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body,
+				},
 				{ sessionToken: "session_test" }
 			)
 			expect(res.ok).toBe(true)
@@ -184,7 +199,11 @@ describe("copilotMessagesFetch", () => {
 		try {
 			const res = await copilotMessagesFetch(
 				url,
-				{ method: "POST", headers: { "content-type": "application/json" }, body },
+				{
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body,
+				},
 				{ sessionToken: "session_test" }
 			)
 			expect(res.ok).toBe(true)
@@ -207,7 +226,11 @@ describe("copilotMessagesFetch", () => {
 		try {
 			const res = await copilotMessagesFetch(
 				url,
-				{ method: "POST", headers: { "content-type": "application/json" }, body },
+				{
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body,
+				},
 				{ sessionToken: "session_test" }
 			)
 			expect(res.ok).toBe(true)
@@ -233,7 +256,11 @@ describe("copilotMessagesFetch", () => {
 		try {
 			const res = await copilotMessagesFetch(
 				url,
-				{ method: "POST", headers: { "content-type": "application/json" }, body },
+				{
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body,
+				},
 				{ sessionToken: "session_test" }
 			)
 			expect(res.ok).toBe(true)
@@ -252,14 +279,23 @@ describe("copilotMessagesFetch", () => {
 		})
 		const url = `http://127.0.0.1:${server.port}`
 		const body = JSON.stringify({
-			system: [{ type: "text", text: "You are a title generator. Provide a short title." }],
+			system: [
+				{
+					type: "text",
+					text: "You are a title generator. Provide a short title.",
+				},
+			],
 			messages: [{ role: "user", content: "hello" }],
 		})
 
 		try {
 			const res = await copilotMessagesFetch(
 				url,
-				{ method: "POST", headers: { "content-type": "application/json" }, body },
+				{
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body,
+				},
 				{ sessionToken: "session_test" }
 			)
 			expect(res.ok).toBe(true)

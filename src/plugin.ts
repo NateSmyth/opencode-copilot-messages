@@ -117,7 +117,9 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 						},
 					})
 				}
-				const target = provider as unknown as { models?: Record<string, ModelWithVariants> }
+				const target = provider as unknown as {
+					models?: Record<string, ModelWithVariants>
+				}
 				const list = target.models ?? {}
 				target.models = list
 				const models = await fetchModels({

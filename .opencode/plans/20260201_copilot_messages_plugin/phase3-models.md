@@ -3,9 +3,11 @@
 ## Checklist
 
 ### [Phase: BASELINE]
+
 - [x] [T00] Verify baseline is clean in worktree (`bun test`, `bun run typecheck`).
 
 ### [Phase: RED]
+
 - [x] [T01] Add `src/models/registry.test.ts` that drives `fetchModels()` via a real `Bun.serve()` test server and asserts:
   - request is `GET /models`
   - required VSCode-style headers are present (at minimum: `authorization`, `user-agent`, `editor-version`, `editor-plugin-version`, `copilot-integration-id`, `x-request-id`, `x-github-api-version`)
@@ -13,7 +15,7 @@
 - [x] [T02] In the same test, return a response containing:
   - one model where `supported_endpoints` includes `"/v1/messages"`
   - one model without `"/v1/messages"`
-  and assert `fetchModels()` filters correctly (only the messages-capable model returns).
+    and assert `fetchModels()` filters correctly (only the messages-capable model returns).
 - [x] [T03] Add a mapping assertion that the returned OpenCode model object matches the required shape:
   - `providerID: "copilot-messages"`
   - `api: { npm: "@ai-sdk/anthropic" }`
@@ -24,12 +26,16 @@
   - raw array: `CopilotModel[]`
   - `{ data: CopilotModel[] }`
   - `{ models: CopilotModel[] }`
-  (This keeps us resilient if Copilot changes the JSON envelope.)
+    (This keeps us resilient if Copilot changes the JSON envelope.)
+
 ---
+
 - [ ] **COMMIT**: `test: cover copilot /models registry`
+
 ---
 
 ### [Phase: GREEN]
+
 - [x] [T05] Implement `mapToOpencodeModel(model: CopilotModel)` in `src/models/registry.ts` to produce:
   ```ts
   {
@@ -59,25 +65,34 @@
 - [x] [T07] Update the docstring in `src/models/registry.ts` to match reality:
   - endpoint is `https://api.copilot.com/models` (not `api.github.com/copilot_internal/v2/models`)
   - keep the `supported_endpoints` filter description
+
 ---
+
 - [ ] **COMMIT**: `feat: fetch and map copilot models registry`
+
 ---
 
 ### [Phase: REFACTOR]
+
 - [x] [T08] Tighten types without `any`:
   - export an `OpencodeModel` type from `src/models/registry.ts` (or infer where possible)
   - ensure `options` fields remain optional/`undefined`-safe
 - [x] [T09] (Optional) If it meaningfully reduces duplication, extend `buildHeaders()` to accept an optional intent/interaction override so `fetchModels()` doesn’t mutate header values inline. Keep the default behavior unchanged.
+
 ---
+
 - [ ] **COMMIT**: `refactor: simplify model registry headers/types`
+
 ---
 
 ## Summary
 
 ### Goal
+
 Given a valid Copilot session token, when we call `fetchModels()`, then it should GET `https://api.copilot.com/models` with VSCode-like headers, filter to models that support `"/v1/messages"`, and return those models mapped into the required OpenCode model shape.
 
 ### Pitfalls
+
 - Don’t accidentally call the GitHub `copilot_internal` models endpoint; Phase 3 requires `api.copilot.com/models`.
 - Don’t rely on a single JSON envelope shape; accept the common variants so the plugin doesn’t break on a server-side change.
 - Avoid over-testing random values like `x-request-id`; assert presence/format, not exact equality.

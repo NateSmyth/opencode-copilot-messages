@@ -16,16 +16,16 @@ Prefer `const`.
 Good:
 
 ```ts
-const foo = condition ? 1 : 2
+const foo = condition ? 1 : 2;
 ```
 
 Bad:
 
 ```ts
-let foo
+let foo;
 
-if (condition) foo = 1
-else foo = 2
+if (condition) foo = 1;
+else foo = 2;
 ```
 
 ### Avoid else statements
@@ -36,8 +36,8 @@ Good:
 
 ```ts
 function foo() {
-  if (condition) return 1
-  return 2
+  if (condition) return 1;
+  return 2;
 }
 ```
 
@@ -45,8 +45,8 @@ Bad:
 
 ```ts
 function foo() {
-  if (condition) return 1
-  else return 2
+  if (condition) return 1;
+  else return 2;
 }
 ```
 
@@ -58,17 +58,17 @@ Only use multiple words if you cannot.
 Good:
 
 ```ts
-const foo = 1
-const bar = 2
-const baz = 3
+const foo = 1;
+const bar = 2;
+const baz = 3;
 ```
 
 Bad:
 
 ```ts
-const fooBar = 1
-const barBaz = 2
-const bazFoo = 3
+const fooBar = 1;
+const barBaz = 2;
+const bazFoo = 3;
 ```
 
 ### Comments
@@ -84,7 +84,7 @@ If you are unsure whether a comment is needed, it isn't.
 You MUST avoid using `mocks` as much as possible.
 Tests MUST test actual implementation, do not duplicate logic into a test.
 
-Do not make trivial tests. Do not test internal implementation. Only *end behavior* needs testing.
+Do not make trivial tests. Do not test internal implementation. Only _end behavior_ needs testing.
 
 ## Commits
 
