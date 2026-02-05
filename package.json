@@ -1,6 +1,6 @@
 {
 	"name": "opencode-copilot-messages",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"description": "OpenCode plugin for Copilot Claude via Anthropic Messages API (/v1/messages)",
 	"type": "module",
 	"main": "./dist/index.js",
