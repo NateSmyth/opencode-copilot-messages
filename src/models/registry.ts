@@ -1,12 +1,3 @@
-/**
- * Model registry for Copilot Messages API.
- *
- * Fetches available models from:
- * GET https://api.{from-token}/models
- *
- * Filters to models with supported_endpoints including "/v1/messages"
- */
-
 import type { Model } from "@opencode-ai/sdk"
 import { COPILOT_CHAT_VERSION, VSCODE_VERSION } from "../auth/headers"
 import { getBaseUrlFromToken } from "../auth/token"

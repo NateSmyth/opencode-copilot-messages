@@ -1,22 +1,3 @@
-/**
- * Header construction for Copilot Messages API.
- *
- * We proxy as VSCode Copilot Chat, so headers must match exactly:
- *
- * - authorization: Bearer ${sessionToken}
- * - user-agent: GitHubCopilotChat/${pluginVersion}
- * - editor-version: vscode/${editorVersion}
- * - editor-plugin-version: copilot-chat/${pluginVersion}
- * - copilot-integration-id: vscode-chat
- * - x-request-id: ${uuid}
- * - x-interaction-type: conversation-agent
- * - openai-intent: conversation-agent
- * - x-github-api-version: 2025-10-01
- * - x-initiator: user | agent (CRITICAL for billing)
- * - anthropic-beta: interleaved-thinking-2025-05-14
- * - Copilot-Vision-Request: true (when images present)
- */
-
 import { COPILOT_CHAT_VERSION, VSCODE_VERSION } from "../auth/headers"
 
 export interface HeaderContext {
@@ -42,7 +23,6 @@ export function buildHeaders(context: HeaderContext): Record<string, string> {
 		"anthropic-beta": "interleaved-thinking-2025-05-14",
 	}
 
-	// Add vision header if images present
 	if (context.hasImages) {
 		headers["Copilot-Vision-Request"] = "true"
 	}

@@ -33,7 +33,6 @@ export function getBaseUrlFromToken(token: string): string | null {
 	const match = token.match(/proxy-ep=([^;]+)/)
 	if (!match) return null
 	const proxyHost = match[1]
-	// Convert proxy.xxx to api.xxx
 	const apiHost = proxyHost.replace(/^proxy\./, "api.")
 	return `https://${apiHost}`
 }
@@ -70,7 +69,6 @@ export async function exchangeForSessionToken(input: {
 			const nowSeconds = Math.floor((input.now ?? Date.now)() / 1000)
 			return nowSeconds + data.refresh_in + 60
 		})()
-		// Clamp to token's exp if it's earlier (defensive against bad expires_at)
 		return exp ? Math.min(base, exp) : base
 	})()
 
@@ -87,7 +85,6 @@ export function shouldRefreshToken(input: {
 	now?: () => number
 }): boolean {
 	const nowSeconds = Math.floor((input.now ?? Date.now)() / 1000)
-	// If token's embedded exp is already expired, force refresh
 	if (input.token) {
 		const exp = parseTokenExpiration(input.token)
 		if (exp !== null && exp <= nowSeconds) return true
@@ -120,10 +117,6 @@ export async function refreshSessionToken(input: {
 	})
 }
 
-/**
- * Ensures a valid session token for a request.
- * Call this before every request to the Copilot API to handle token refresh automatically.
- */
 export async function ensureFreshToken(input: {
 	token: SessionToken
 	githubToken: string

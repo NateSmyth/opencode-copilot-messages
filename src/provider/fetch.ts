@@ -1,9 +1,3 @@
-/**
- * Custom fetch wrapper for Copilot Messages API.
- *
- * Injects required headers and handles auth.
- */
-
 import { buildHeaders } from "./headers"
 import { type AnthropicMessage, determineInitiator, hasImageContent } from "./initiator"
 
@@ -78,7 +72,6 @@ function parse(text: string): ParsedBody {
 function isInternalAgent(body: ParsedBody): boolean {
 	const system = body.system
 	if (!system) return false
-	// Check for title agent system prompt
 	if (typeof system === "string") {
 		return system.startsWith("You are a title generator")
 	}
