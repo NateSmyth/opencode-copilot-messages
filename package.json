@@ -27,7 +27,7 @@
 		"prepare": "husky"
 	},
 	"dependencies": {
-		"@ai-sdk/anthropic": "^1.0.0",
+		"@ai-sdk/anthropic": "2.0.58",
 		"@opencode-ai/plugin": "^1.1.48"
 	},
 	"devDependencies": {
