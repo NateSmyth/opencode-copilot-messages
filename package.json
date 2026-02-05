@@ -1,6 +1,6 @@
 {
 	"name": "opencode-copilot-messages",
-	"version": "0.1.0",
+	"version": "0.0.0",
 	"description": "OpenCode plugin for Copilot Claude via Anthropic Messages API (/v1/messages)",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -19,6 +19,10 @@
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
 		"test": "bun test",
+		"preflight": "bun test && bun run typecheck && bun run lint",
+		"release:patch": "bun run preflight && npm version patch && npm publish && git push --follow-tags",
+		"release:minor": "bun run preflight && npm version minor && npm publish && git push --follow-tags",
+		"release:major": "bun run preflight && npm version major && npm publish && git push --follow-tags",
 		"prepublishOnly": "bun run build",
 		"prepare": "husky"
 	},
