@@ -13,6 +13,8 @@ export async function copilotMessagesFetch(
 	const headers = merge(input, init)
 	headers.delete("x-api-key")
 	const body = await readBody(init?.body)
+	const effort = parseEffort(headers.get("x-adaptive-effort"))
+	headers.delete("x-adaptive-effort")
 	const initiator =
 		forcedInitiator(headers.get("x-initiator")) ??
 		(isInternalAgent(body) ? "agent" : determineInitiator(body.messages))
@@ -27,8 +29,12 @@ export async function copilotMessagesFetch(
 		headers.set(key, value)
 	}
 
+	const rewritten =
+		effort && body.thinking?.type === "enabled" ? rewriteBody(init?.body, effort) : undefined
+
 	return fetch(input, {
 		...init,
+		body: rewritten ?? init?.body,
 		headers,
 	})
 }
@@ -48,6 +54,7 @@ function merge(input: string | URL | Request, init: RequestInit | undefined): He
 interface ParsedBody {
 	messages: AnthropicMessage[]
 	system?: string | Array<{ type: string; text?: string }>
+	thinking?: { type: string; budget_tokens?: number }
 }
 
 async function readBody(body: RequestInit["body"] | null | undefined): Promise<ParsedBody> {
@@ -60,12 +67,37 @@ async function readBody(body: RequestInit["body"] | null | undefined): Promise<P
 
 function parse(text: string): ParsedBody {
 	try {
-		const parsed = JSON.parse(text) as { messages?: unknown; system?: unknown }
+		const parsed = JSON.parse(text) as {
+			messages?: unknown
+			system?: unknown
+			thinking?: unknown
+		}
 		const messages = Array.isArray(parsed.messages) ? (parsed.messages as AnthropicMessage[]) : []
 		const system = parsed.system as ParsedBody["system"]
-		return { messages, system }
+		const thinking = parsed.thinking as ParsedBody["thinking"]
+		return { messages, system, thinking }
 	} catch {
 		return { messages: [] }
+	}
+}
+
+function parseEffort(value: string | null): "high" | "max" | null {
+	if (value === "high" || value === "max") return value
+	return null
+}
+
+function rewriteBody(
+	raw: RequestInit["body"] | null | undefined,
+	effort: "high" | "max"
+): string | undefined {
+	if (!raw || typeof raw !== "string") return undefined
+	try {
+		const obj = JSON.parse(raw) as Record<string, unknown>
+		obj.thinking = { type: "adaptive" }
+		obj.output_config = { effort }
+		return JSON.stringify(obj)
+	} catch {
+		return undefined
 	}
 }
 
