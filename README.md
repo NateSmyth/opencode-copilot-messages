@@ -33,7 +33,7 @@ The plugin will work without any additional config, but for the best experience 
   "provider": {
     "copilot-messages": {
       "models": {
-        "claude-opus-4.5": {
+        "claude-opus-4.6": {
           "limit": {
             "context": 200000,
             "output": 64000
@@ -52,6 +52,7 @@ Currently, the "Premium Request" cost per model is:
 - Haiku: 0.33x
 - Sonnet: 1x
 - Opus 4.5: 3x
+- Opus 4.6: 3x
 - Opus 4.1: 10x
 
 This plugin properly handles the "user-initiated" vs. "agent-initiated" headers so you only spend requests on actual prompts. Tool loops and subagents are agent-initiated.
