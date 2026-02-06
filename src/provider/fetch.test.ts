@@ -456,4 +456,43 @@ describe("copilotMessagesFetch", () => {
 			server.stop()
 		}
 	})
+
+	it("preserves existing output_config fields during rewrite", async () => {
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				const sent = (await req.json()) as Record<string, unknown>
+				const config = sent.output_config as Record<string, unknown>
+				expect(config.effort).toBe("high")
+				expect(config.format).toBe("json")
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			model: "claude-opus-4-6",
+			thinking: { type: "enabled", budget_tokens: 16000 },
+			output_config: { format: "json" },
+			max_tokens: 32000,
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						"x-adaptive-effort": "high",
+					},
+					body,
+				},
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
+		}
+	})
 })

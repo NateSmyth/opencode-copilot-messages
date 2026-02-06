@@ -6,6 +6,7 @@ export interface HeaderContext {
 	hasImages?: boolean
 	interaction?: string
 	intent?: string
+	adaptiveEffort?: "high" | "max"
 }
 
 export function buildHeaders(context: HeaderContext): Record<string, string> {

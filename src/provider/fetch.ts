@@ -94,7 +94,8 @@ function rewriteBody(
 	try {
 		const obj = JSON.parse(raw) as Record<string, unknown>
 		obj.thinking = { type: "adaptive" }
-		obj.output_config = { effort }
+		const existing = (typeof obj.output_config === "object" && obj.output_config) || {}
+		obj.output_config = { ...(existing as Record<string, unknown>), effort }
 		return JSON.stringify(obj)
 	} catch {
 		return undefined
