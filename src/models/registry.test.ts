@@ -45,6 +45,31 @@ const make = (id: string, endpoints: string[]): CopilotModel => ({
 	supported_endpoints: endpoints,
 })
 
+const makeAdaptive = (id: string, endpoints: string[]): CopilotModel => ({
+	id,
+	name: id,
+	vendor: "anthropic",
+	capabilities: {
+		family: "claude-opus-4.6",
+		limits: {
+			max_context_window_tokens: 200000,
+			max_output_tokens: 64000,
+			max_prompt_tokens: 128000,
+		},
+		supports: {
+			adaptive_thinking: true,
+			structured_outputs: true,
+			max_thinking_budget: 32000,
+			min_thinking_budget: 1024,
+			streaming: true,
+			tool_calls: true,
+			vision: true,
+			parallel_tool_calls: true,
+		} as Record<string, unknown>,
+	},
+	supported_endpoints: endpoints,
+})
+
 describe("copilot model registry", () => {
 	it("fetchModels() requests /models with required headers and maps results", async () => {
 		const models = [
@@ -162,5 +187,45 @@ describe("copilot model registry", () => {
 			expect(res[0].id).toBe(model.id)
 		}
 		server.stop()
+	})
+
+	it("maps adaptive_thinking capability to options.adaptiveThinking", async () => {
+		const models = [makeAdaptive("claude-opus-4-6", ["/v1/messages"])]
+
+		const server = Bun.serve({
+			port: 0,
+			fetch: async () => Response.json({ data: models }),
+		})
+
+		const fetchModels = await load()
+		const url = `http://127.0.0.1:${server.port}`
+		const res = await fetchModels({ sessionToken: "session", url, fetch })
+		server.stop()
+
+		expect(res.length).toBe(1)
+		const model = res[0]
+		expect(model.options.adaptiveThinking).toBe(true)
+		expect(model.options.maxThinkingBudget).toBe(32000)
+		expect(model.options.minThinkingBudget).toBe(1024)
+		expect(model.limit.output).toBe(64000)
+		expect(model.limit.context).toBe(200000)
+		expect(model.capabilities.reasoning).toBe(true)
+	})
+
+	it("defaults adaptiveThinking to false when not present", async () => {
+		const models = [make("claude-opus-4-5", ["/v1/messages"])]
+
+		const server = Bun.serve({
+			port: 0,
+			fetch: async () => Response.json({ data: models }),
+		})
+
+		const fetchModels = await load()
+		const url = `http://127.0.0.1:${server.port}`
+		const res = await fetchModels({ sessionToken: "session", url, fetch })
+		server.stop()
+
+		expect(res.length).toBe(1)
+		expect(res[0].options.adaptiveThinking).toBe(false)
 	})
 })
