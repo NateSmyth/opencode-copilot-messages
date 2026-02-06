@@ -89,43 +89,124 @@ describe("CopilotMessagesPlugin hooks", () => {
 				},
 			},
 		} as never)) as unknown as {
+			"chat.params"?: (
+				input: unknown,
+				output: {
+					temperature: number
+					topP: number
+					topK: number
+					options: Record<string, unknown>
+				}
+			) => Promise<void>
 			"chat.headers"?: (
 				input: unknown,
 				output: { headers: Record<string, string> }
 			) => Promise<void>
 		}
-		if (!hooks["chat.headers"]) throw new Error("missing chat.headers")
-
-		const adaptive = {
-			sessionID: "s1",
-			agent: "agent",
-			model: {
-				providerID: "copilot-messages",
-				options: { adaptiveThinking: true },
-			},
-			provider: { info: { id: "copilot-messages" } },
-			message: { variant: "high" },
+		if (!hooks["chat.params"] || !hooks["chat.headers"]) {
+			throw new Error("missing chat.params or chat.headers")
 		}
+
+		const model = {
+			providerID: "copilot-messages",
+			options: { adaptiveThinking: true },
+		}
+		const provider = { info: { id: "copilot-messages" } }
+
+		// variant "high" → effort "high"
+		await hooks["chat.params"](
+			{
+				sessionID: "s1",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "high" },
+			} as never,
+			{ temperature: 0, topP: 0, topK: 0, options: {} }
+		)
 		const res = { headers: {} as Record<string, string> }
-		await hooks["chat.headers"](adaptive as never, res)
+		await hooks["chat.headers"](
+			{
+				sessionID: "s1",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "high" },
+			} as never,
+			res
+		)
 		expect(res.headers["x-adaptive-effort"]).toBe("high")
 
+		// variant "max" → effort "max"
+		await hooks["chat.params"](
+			{
+				sessionID: "s2",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "max" },
+			} as never,
+			{ temperature: 0, topP: 0, topK: 0, options: {} }
+		)
 		const max = { headers: {} as Record<string, string> }
-		await hooks["chat.headers"]({ ...adaptive, message: { variant: "max" } } as never, max)
+		await hooks["chat.headers"](
+			{
+				sessionID: "s2",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "max" },
+			} as never,
+			max
+		)
 		expect(max.headers["x-adaptive-effort"]).toBe("max")
 
+		// no variant → no effort
+		await hooks["chat.params"](
+			{
+				sessionID: "s3",
+				agent: "agent",
+				model,
+				provider,
+				message: {},
+			} as never,
+			{ temperature: 0, topP: 0, topK: 0, options: {} }
+		)
 		const none = { headers: {} as Record<string, string> }
-		await hooks["chat.headers"]({ ...adaptive, message: {} } as never, none)
+		await hooks["chat.headers"](
+			{
+				sessionID: "s3",
+				agent: "agent",
+				model,
+				provider,
+				message: {},
+			} as never,
+			none
+		)
 		expect(none.headers["x-adaptive-effort"]).toBeUndefined()
 
+		// non-adaptive model → no effort even with variant
+		const legacy = {
+			providerID: "copilot-messages",
+			options: { adaptiveThinking: false },
+		}
+		await hooks["chat.params"](
+			{
+				sessionID: "s4",
+				agent: "agent",
+				model: legacy,
+				provider,
+				message: { variant: "high" },
+			} as never,
+			{ temperature: 0, topP: 0, topK: 0, options: {} }
+		)
 		const old = { headers: {} as Record<string, string> }
 		await hooks["chat.headers"](
 			{
-				...adaptive,
-				model: {
-					providerID: "copilot-messages",
-					options: { adaptiveThinking: false },
-				},
+				sessionID: "s4",
+				agent: "agent",
+				model: legacy,
+				provider,
 				message: { variant: "high" },
 			} as never,
 			old
@@ -133,52 +214,107 @@ describe("CopilotMessagesPlugin hooks", () => {
 		expect(old.headers["x-adaptive-effort"]).toBeUndefined()
 	})
 
-	it("uses explicit effort from model options over variant", async () => {
+	it("resolves effort from merged variant options via chat.params", async () => {
 		const hooks = (await CopilotMessagesPlugin({
 			client: {
 				session: { get: async () => ({ data: {} }) },
 			},
 		} as never)) as unknown as {
+			"chat.params"?: (
+				input: unknown,
+				output: {
+					temperature: number
+					topP: number
+					topK: number
+					options: Record<string, unknown>
+				}
+			) => Promise<void>
 			"chat.headers"?: (
 				input: unknown,
 				output: { headers: Record<string, string> }
 			) => Promise<void>
 		}
-		if (!hooks["chat.headers"]) throw new Error("missing chat.headers")
-
-		const base = {
-			sessionID: "s1",
-			agent: "agent",
-			provider: { info: { id: "copilot-messages" } },
+		if (!hooks["chat.params"] || !hooks["chat.headers"]) {
+			throw new Error("missing hooks")
 		}
 
+		const model = {
+			providerID: "copilot-messages",
+			options: { adaptiveThinking: true },
+		}
+		const provider = { info: { id: "copilot-messages" } }
+
+		// custom variant "turbo" with effort: "medium" in merged options
+		await hooks["chat.params"](
+			{
+				sessionID: "s5",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "turbo" },
+			} as never,
+			{ temperature: 0, topP: 0, topK: 0, options: { effort: "medium" } }
+		)
 		const medium = { headers: {} as Record<string, string> }
 		await hooks["chat.headers"](
 			{
-				...base,
-				model: {
-					providerID: "copilot-messages",
-					options: { adaptiveThinking: true, effort: "medium" },
-				},
-				message: { variant: "high" },
+				sessionID: "s5",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "turbo" },
 			} as never,
 			medium
 		)
 		expect(medium.headers["x-adaptive-effort"]).toBe("medium")
 
+		// custom variant "efficient" with effort: "low"
+		await hooks["chat.params"](
+			{
+				sessionID: "s6",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "efficient" },
+			} as never,
+			{ temperature: 0, topP: 0, topK: 0, options: { effort: "low" } }
+		)
 		const low = { headers: {} as Record<string, string> }
 		await hooks["chat.headers"](
 			{
-				...base,
-				model: {
-					providerID: "copilot-messages",
-					options: { adaptiveThinking: true, effort: "low" },
-				},
-				message: {},
+				sessionID: "s6",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "efficient" },
 			} as never,
 			low
 		)
 		expect(low.headers["x-adaptive-effort"]).toBe("low")
+
+		// explicit effort in merged options overrides variant name
+		await hooks["chat.params"](
+			{
+				sessionID: "s7",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "high" },
+			} as never,
+			{ temperature: 0, topP: 0, topK: 0, options: { effort: "medium" } }
+		)
+		const override = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"](
+			{
+				sessionID: "s7",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "high" },
+			} as never,
+			override
+		)
+		expect(override.headers["x-adaptive-effort"]).toBe("medium")
 	})
 
 	it("adaptive effort header drives body rewrite end-to-end", async () => {
