@@ -156,6 +156,7 @@ describe("copilot model registry", () => {
 			},
 			status: "active",
 			options: {
+				adaptiveThinking: false,
 				maxThinkingBudget: 1024,
 				minThinkingBudget: 128,
 			},

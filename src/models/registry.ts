@@ -20,6 +20,8 @@ export interface CopilotModel {
 			}
 		}
 		supports?: {
+			adaptive_thinking?: boolean
+			structured_outputs?: boolean
 			max_thinking_budget?: number
 			min_thinking_budget?: number
 			streaming?: boolean
@@ -81,6 +83,7 @@ export function mapToOpencodeModel(model: CopilotModel): Model {
 		},
 		status: model.preview ? "beta" : "active",
 		options: {
+			adaptiveThinking: !!supports.adaptive_thinking,
 			maxThinkingBudget: supports.max_thinking_budget,
 			minThinkingBudget: supports.min_thinking_budget,
 		},
