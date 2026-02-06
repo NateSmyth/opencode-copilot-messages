@@ -495,4 +495,44 @@ describe("copilotMessagesFetch", () => {
 			server.stop()
 		}
 	})
+
+	it("rewrites with low and medium effort levels", async () => {
+		for (const level of ["low", "medium"] as const) {
+			const server = Bun.serve({
+				port: 0,
+				fetch: async (req) => {
+					const sent = (await req.json()) as Record<string, unknown>
+					const thinking = sent.thinking as Record<string, unknown>
+					expect(thinking.type).toBe("adaptive")
+					const config = sent.output_config as Record<string, unknown>
+					expect(config.effort).toBe(level)
+					return new Response("ok")
+				},
+			})
+			const url = `http://127.0.0.1:${server.port}`
+			const body = JSON.stringify({
+				thinking: { type: "enabled", budget_tokens: 16000 },
+				max_tokens: 32000,
+				messages: [{ role: "user", content: "hello" }],
+			})
+
+			try {
+				const res = await copilotMessagesFetch(
+					url,
+					{
+						method: "POST",
+						headers: {
+							"content-type": "application/json",
+							"x-adaptive-effort": level,
+						},
+						body,
+					},
+					{ sessionToken: "session_test" }
+				)
+				expect(res.ok).toBe(true)
+			} finally {
+				server.stop()
+			}
+		}
+	})
 })

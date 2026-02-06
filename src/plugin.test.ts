@@ -133,6 +133,54 @@ describe("CopilotMessagesPlugin hooks", () => {
 		expect(old.headers["x-adaptive-effort"]).toBeUndefined()
 	})
 
+	it("uses explicit effort from model options over variant", async () => {
+		const hooks = (await CopilotMessagesPlugin({
+			client: {
+				session: { get: async () => ({ data: {} }) },
+			},
+		} as never)) as unknown as {
+			"chat.headers"?: (
+				input: unknown,
+				output: { headers: Record<string, string> }
+			) => Promise<void>
+		}
+		if (!hooks["chat.headers"]) throw new Error("missing chat.headers")
+
+		const base = {
+			sessionID: "s1",
+			agent: "agent",
+			provider: { info: { id: "copilot-messages" } },
+		}
+
+		const medium = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"](
+			{
+				...base,
+				model: {
+					providerID: "copilot-messages",
+					options: { adaptiveThinking: true, effort: "medium" },
+				},
+				message: { variant: "high" },
+			} as never,
+			medium
+		)
+		expect(medium.headers["x-adaptive-effort"]).toBe("medium")
+
+		const low = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"](
+			{
+				...base,
+				model: {
+					providerID: "copilot-messages",
+					options: { adaptiveThinking: true, effort: "low" },
+				},
+				message: {},
+			} as never,
+			low
+		)
+		expect(low.headers["x-adaptive-effort"]).toBe("low")
+	})
+
 	it("adaptive effort header drives body rewrite end-to-end", async () => {
 		const hooks = (await CopilotMessagesPlugin({
 			client: {
