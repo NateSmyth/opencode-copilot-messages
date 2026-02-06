@@ -81,14 +81,16 @@ function parse(text: string): ParsedBody {
 	}
 }
 
-function parseEffort(value: string | null): "high" | "max" | null {
-	if (value === "high" || value === "max") return value
+type Effort = "low" | "medium" | "high" | "max"
+
+function parseEffort(value: string | null): Effort | null {
+	if (value === "low" || value === "medium" || value === "high" || value === "max") return value
 	return null
 }
 
 function rewriteBody(
 	raw: RequestInit["body"] | null | undefined,
-	effort: "high" | "max"
+	effort: Effort
 ): string | undefined {
 	if (!raw || typeof raw !== "string") return undefined
 	try {

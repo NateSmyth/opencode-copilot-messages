@@ -52,10 +52,16 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 			const providerID = data.model.providerID
 			if (providerID !== "copilot-messages") return
 
-			if (data.model.options?.adaptiveThinking === true && data.message?.variant) {
-				const variant = data.message.variant
-				if (variant === "high" || variant === "max") {
-					output.headers["x-adaptive-effort"] = variant
+			if (data.model.options?.adaptiveThinking === true) {
+				const explicit = data.model.options.effort as string | undefined
+				const effort =
+					explicit === "low" || explicit === "medium" || explicit === "high" || explicit === "max"
+						? explicit
+						: data.message?.variant === "high" || data.message?.variant === "max"
+							? data.message.variant
+							: undefined
+				if (effort) {
+					output.headers["x-adaptive-effort"] = effort
 				}
 			}
 
