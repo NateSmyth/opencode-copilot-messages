@@ -43,13 +43,22 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 		"chat.headers": async (
 			data: {
 				sessionID: string
-				model: { providerID: string }
+				model: { providerID: string; options?: Record<string, unknown> }
 				provider?: { info?: { id?: string } }
+				message?: { variant?: string }
 			},
 			output: { headers: Record<string, string> }
 		) => {
 			const providerID = data.model.providerID
 			if (providerID !== "copilot-messages") return
+
+			if (data.model.options?.adaptiveThinking === true && data.message?.variant) {
+				const variant = data.message.variant
+				if (variant === "high" || variant === "max") {
+					output.headers["x-adaptive-effort"] = variant
+				}
+			}
+
 			const session = await input.client.session
 				.get({
 					path: {
