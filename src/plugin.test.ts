@@ -133,6 +133,111 @@ describe("CopilotMessagesPlugin hooks", () => {
 		expect(old.headers["x-adaptive-effort"]).toBeUndefined()
 	})
 
+	it("adaptive effort header drives body rewrite end-to-end", async () => {
+		const hooks = (await CopilotMessagesPlugin({
+			client: {
+				session: { get: async () => ({ data: {} }) },
+				auth: { set: async () => {} },
+			},
+		} as never)) as unknown as {
+			"chat.headers"?: (
+				input: unknown,
+				output: { headers: Record<string, string> }
+			) => Promise<void>
+			auth?: {
+				loader?: (
+					auth: () => Promise<unknown>,
+					provider: unknown
+				) => Promise<Record<string, unknown>>
+			}
+		}
+		if (!hooks["chat.headers"] || !hooks.auth?.loader) {
+			throw new Error("missing hooks")
+		}
+
+		const auth = {
+			type: "oauth" as const,
+			refresh: "gho_test",
+			access: "session_old",
+			expires: Date.now() + 60_000,
+		}
+
+		const captured: Record<string, unknown> = {}
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				const url = new URL(req.url)
+				if (url.pathname === "/copilot_internal/v2/token") {
+					return Response.json({
+						token: "tid=1;exp=999:mac",
+						expires_at: Math.floor(Date.now() / 1000) + 600,
+						refresh_in: 120,
+					})
+				}
+				if (url.pathname === "/models") {
+					return Response.json({ data: [] })
+				}
+				if (url.pathname === "/v1/messages") {
+					const body = (await req.json()) as Record<string, unknown>
+					captured.thinking = body.thinking
+					captured.output_config = body.output_config
+					captured.effort_header = req.headers.get("x-adaptive-effort")
+					return Response.json({ ok: true })
+				}
+				return new Response("not-found", { status: 404 })
+			},
+		})
+
+		const base = `http://127.0.0.1:${server.port}`
+		const original = globalThis.fetch
+		const forward = async (input: string | URL | Request, init?: RequestInit) => {
+			const req = input instanceof Request ? input : new Request(input.toString(), init)
+			const url = new URL(req.url)
+			const target = new URL(url.pathname + url.search, base)
+			return original(
+				new Request(target.toString(), {
+					method: req.method,
+					headers: req.headers,
+					body: req.body,
+				})
+			)
+		}
+		globalThis.fetch = Object.assign(forward, {
+			preconnect: original.preconnect ?? (() => {}),
+		}) as typeof fetch
+
+		try {
+			const res = await hooks.auth.loader(async () => auth, { models: {} })
+			const doFetch = res.fetch as (req: string, init: RequestInit) => Promise<Response>
+
+			const body = JSON.stringify({
+				model: "claude-opus-4-6",
+				thinking: { type: "enabled", budget_tokens: 16000 },
+				max_tokens: 32000,
+				messages: [{ role: "user", content: "hello" }],
+			})
+
+			await doFetch(`${base}/v1/messages`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					"x-adaptive-effort": "high",
+				},
+				body,
+			})
+
+			const thinking = captured.thinking as Record<string, unknown>
+			expect(thinking.type).toBe("adaptive")
+			expect(thinking.budget_tokens).toBeUndefined()
+			const config = captured.output_config as Record<string, unknown>
+			expect(config.effort).toBe("high")
+			expect(captured.effort_header).toBe(null)
+		} finally {
+			server.stop()
+			globalThis.fetch = original
+		}
+	})
+
 	it("auth loader returns init config and wires fetch", async () => {
 		const auth = {
 			type: "oauth",
