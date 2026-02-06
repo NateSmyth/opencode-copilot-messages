@@ -13,6 +13,9 @@ import { copilotMessagesFetch } from "./provider/fetch"
 
 type ModelWithVariants = Model & { variants?: Record<string, unknown> }
 
+const EFFORTS = new Set(["low", "medium", "high", "max"])
+const pending = new Map<string, string>()
+
 /**
  * OpenCode plugin for Copilot Claude via Anthropic Messages API.
  *
@@ -40,29 +43,40 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				}
 			}
 		},
-		"chat.headers": async (
+		"chat.params": async (
 			data: {
 				sessionID: string
 				model: { providerID: string; options?: Record<string, unknown> }
-				provider?: { info?: { id?: string } }
 				message?: { variant?: string }
+			},
+			output: { options: Record<string, unknown> }
+		) => {
+			if (data.model.providerID !== "copilot-messages") return
+			if (data.model.options?.adaptiveThinking !== true) return
+			const explicit = output.options.effort as string | undefined
+			const variant = data.message?.variant
+			const effort = EFFORTS.has(explicit ?? "")
+				? (explicit as string)
+				: EFFORTS.has(variant ?? "")
+					? (variant as string)
+					: undefined
+			if (effort) pending.set(data.sessionID, effort)
+		},
+		"chat.headers": async (
+			data: {
+				sessionID: string
+				model: { providerID: string }
+				provider?: { info?: { id?: string } }
 			},
 			output: { headers: Record<string, string> }
 		) => {
 			const providerID = data.model.providerID
 			if (providerID !== "copilot-messages") return
 
-			if (data.model.options?.adaptiveThinking === true) {
-				const explicit = data.model.options.effort as string | undefined
-				const effort =
-					explicit === "low" || explicit === "medium" || explicit === "high" || explicit === "max"
-						? explicit
-						: data.message?.variant === "high" || data.message?.variant === "max"
-							? data.message.variant
-							: undefined
-				if (effort) {
-					output.headers["x-adaptive-effort"] = effort
-				}
+			const effort = pending.get(data.sessionID)
+			if (effort) {
+				pending.delete(data.sessionID)
+				output.headers["x-adaptive-effort"] = effort
 			}
 
 			const session = await input.client.session
