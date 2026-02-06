@@ -81,6 +81,58 @@ describe("CopilotMessagesPlugin hooks", () => {
 		expect(userRes.headers["x-initiator"]).toBeUndefined()
 	})
 
+	it("sets x-adaptive-effort header for adaptive models with variant", async () => {
+		const hooks = (await CopilotMessagesPlugin({
+			client: {
+				session: {
+					get: async () => ({ data: {} }),
+				},
+			},
+		} as never)) as unknown as {
+			"chat.headers"?: (
+				input: unknown,
+				output: { headers: Record<string, string> }
+			) => Promise<void>
+		}
+		if (!hooks["chat.headers"]) throw new Error("missing chat.headers")
+
+		const adaptive = {
+			sessionID: "s1",
+			agent: "agent",
+			model: {
+				providerID: "copilot-messages",
+				options: { adaptiveThinking: true },
+			},
+			provider: { info: { id: "copilot-messages" } },
+			message: { variant: "high" },
+		}
+		const res = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"](adaptive as never, res)
+		expect(res.headers["x-adaptive-effort"]).toBe("high")
+
+		const max = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"]({ ...adaptive, message: { variant: "max" } } as never, max)
+		expect(max.headers["x-adaptive-effort"]).toBe("max")
+
+		const none = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"]({ ...adaptive, message: {} } as never, none)
+		expect(none.headers["x-adaptive-effort"]).toBeUndefined()
+
+		const old = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"](
+			{
+				...adaptive,
+				model: {
+					providerID: "copilot-messages",
+					options: { adaptiveThinking: false },
+				},
+				message: { variant: "high" },
+			} as never,
+			old
+		)
+		expect(old.headers["x-adaptive-effort"]).toBeUndefined()
+	})
+
 	it("auth loader returns init config and wires fetch", async () => {
 		const auth = {
 			type: "oauth",
