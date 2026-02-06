@@ -303,4 +303,157 @@ describe("copilotMessagesFetch", () => {
 			server.stop()
 		}
 	})
+
+	it("rewrites thinking to adaptive when x-adaptive-effort is set", async () => {
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				const sent = (await req.json()) as Record<string, unknown>
+				const thinking = sent.thinking as Record<string, unknown>
+				expect(thinking.type).toBe("adaptive")
+				expect(thinking.budget_tokens).toBeUndefined()
+				const config = sent.output_config as Record<string, unknown>
+				expect(config.effort).toBe("high")
+				expect(sent.max_tokens).toBe(32000)
+				expect(req.headers.get("x-adaptive-effort")).toBe(null)
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			model: "claude-opus-4-6",
+			thinking: { type: "enabled", budget_tokens: 16000 },
+			max_tokens: 32000,
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						"x-adaptive-effort": "high",
+					},
+					body,
+				},
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
+		}
+	})
+
+	it("rewrites thinking with effort max when x-adaptive-effort is max", async () => {
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				const sent = (await req.json()) as Record<string, unknown>
+				const thinking = sent.thinking as Record<string, unknown>
+				expect(thinking.type).toBe("adaptive")
+				const config = sent.output_config as Record<string, unknown>
+				expect(config.effort).toBe("max")
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			model: "claude-opus-4-6",
+			thinking: { type: "enabled", budget_tokens: 31999 },
+			max_tokens: 48000,
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						"x-adaptive-effort": "max",
+					},
+					body,
+				},
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
+		}
+	})
+
+	it("does not rewrite body when x-adaptive-effort is absent", async () => {
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				const sent = (await req.json()) as Record<string, unknown>
+				const thinking = sent.thinking as Record<string, unknown>
+				expect(thinking.type).toBe("enabled")
+				expect(thinking.budget_tokens).toBe(16000)
+				expect(sent.output_config).toBeUndefined()
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			model: "claude-opus-4-6",
+			thinking: { type: "enabled", budget_tokens: 16000 },
+			max_tokens: 32000,
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body,
+				},
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
+		}
+	})
+
+	it("does not rewrite when thinking is not enabled", async () => {
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				const sent = (await req.json()) as Record<string, unknown>
+				expect(sent.thinking).toBeUndefined()
+				expect(sent.output_config).toBeUndefined()
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			model: "claude-opus-4-6",
+			max_tokens: 16000,
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						"x-adaptive-effort": "high",
+					},
+					body,
+				},
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
+		}
+	})
 })
