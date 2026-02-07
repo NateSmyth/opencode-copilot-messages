@@ -30,7 +30,9 @@ export async function copilotMessagesFetch(
 	}
 
 	const rewritten =
-		effort && body.thinking?.type === "enabled" ? rewriteBody(init?.body, effort) : undefined
+		effort && body.thinking?.type === "enabled" && body.raw
+			? rewriteBody(body.raw, effort)
+			: undefined
 
 	return fetch(input, {
 		...init,
@@ -55,6 +57,7 @@ interface ParsedBody {
 	messages: AnthropicMessage[]
 	system?: string | Array<{ type: string; text?: string }>
 	thinking?: { type: string; budget_tokens?: number }
+	raw?: Record<string, unknown>
 }
 
 async function readBody(body: RequestInit["body"] | null | undefined): Promise<ParsedBody> {
@@ -67,41 +70,30 @@ async function readBody(body: RequestInit["body"] | null | undefined): Promise<P
 
 function parse(text: string): ParsedBody {
 	try {
-		const parsed = JSON.parse(text) as {
-			messages?: unknown
-			system?: unknown
-			thinking?: unknown
-		}
+		const parsed = JSON.parse(text) as Record<string, unknown>
 		const messages = Array.isArray(parsed.messages) ? (parsed.messages as AnthropicMessage[]) : []
 		const system = parsed.system as ParsedBody["system"]
 		const thinking = parsed.thinking as ParsedBody["thinking"]
-		return { messages, system, thinking }
+		return { messages, system, thinking, raw: parsed }
 	} catch {
 		return { messages: [] }
 	}
 }
 
-type Effort = "low" | "medium" | "high" | "max"
+export type Effort = "low" | "medium" | "high" | "max"
+
+export const EFFORTS = new Set<string>(["low", "medium", "high", "max"])
 
 function parseEffort(value: string | null): Effort | null {
-	if (value === "low" || value === "medium" || value === "high" || value === "max") return value
+	if (EFFORTS.has(value ?? "")) return value as Effort
 	return null
 }
 
-function rewriteBody(
-	raw: RequestInit["body"] | null | undefined,
-	effort: Effort
-): string | undefined {
-	if (!raw || typeof raw !== "string") return undefined
-	try {
-		const obj = JSON.parse(raw) as Record<string, unknown>
-		obj.thinking = { type: "adaptive" }
-		const existing = (typeof obj.output_config === "object" && obj.output_config) || {}
-		obj.output_config = { ...(existing as Record<string, unknown>), effort }
-		return JSON.stringify(obj)
-	} catch {
-		return undefined
-	}
+function rewriteBody(parsed: Record<string, unknown>, effort: Effort): string {
+	parsed.thinking = { type: "adaptive" } // note: body.raw is mutated in place
+	const existing = (typeof parsed.output_config === "object" && parsed.output_config) || {}
+	parsed.output_config = { ...(existing as Record<string, unknown>), effort }
+	return JSON.stringify(parsed)
 }
 
 function isInternalAgent(body: ParsedBody): boolean {
