@@ -113,7 +113,6 @@ describe("CopilotMessagesPlugin hooks", () => {
 		}
 		const provider = { info: { id: "copilot-messages" } }
 
-		// variant "high" → effort "high"
 		await hooks["chat.params"](
 			{
 				sessionID: "s1",
@@ -137,7 +136,6 @@ describe("CopilotMessagesPlugin hooks", () => {
 		)
 		expect(res.headers["x-adaptive-effort"]).toBe("high")
 
-		// variant "max" → effort "max"
 		await hooks["chat.params"](
 			{
 				sessionID: "s2",
@@ -161,7 +159,6 @@ describe("CopilotMessagesPlugin hooks", () => {
 		)
 		expect(max.headers["x-adaptive-effort"]).toBe("max")
 
-		// no variant → no effort
 		await hooks["chat.params"](
 			{
 				sessionID: "s3",
@@ -185,7 +182,6 @@ describe("CopilotMessagesPlugin hooks", () => {
 		)
 		expect(none.headers["x-adaptive-effort"]).toBeUndefined()
 
-		// non-adaptive model → no effort even with variant
 		const legacy = {
 			providerID: "copilot-messages",
 			options: { adaptiveThinking: false },
@@ -244,7 +240,6 @@ describe("CopilotMessagesPlugin hooks", () => {
 		}
 		const provider = { info: { id: "copilot-messages" } }
 
-		// custom variant "turbo" with effort: "medium" in merged options
 		await hooks["chat.params"](
 			{
 				sessionID: "s5",
@@ -268,7 +263,6 @@ describe("CopilotMessagesPlugin hooks", () => {
 		)
 		expect(medium.headers["x-adaptive-effort"]).toBe("medium")
 
-		// custom variant "efficient" with effort: "low"
 		await hooks["chat.params"](
 			{
 				sessionID: "s6",
@@ -292,7 +286,6 @@ describe("CopilotMessagesPlugin hooks", () => {
 		)
 		expect(low.headers["x-adaptive-effort"]).toBe("low")
 
-		// explicit effort in merged options overrides variant name
 		await hooks["chat.params"](
 			{
 				sessionID: "s7",

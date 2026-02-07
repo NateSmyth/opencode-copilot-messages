@@ -90,7 +90,7 @@ function parseEffort(value: string | null): Effort | null {
 }
 
 function rewriteBody(parsed: Record<string, unknown>, effort: Effort): string {
-	parsed.thinking = { type: "adaptive" } // note: body.raw is mutated in place
+	parsed.thinking = { type: "adaptive" }
 	const existing = (typeof parsed.output_config === "object" && parsed.output_config) || {}
 	parsed.output_config = { ...(existing as Record<string, unknown>), effort }
 	return JSON.stringify(parsed)

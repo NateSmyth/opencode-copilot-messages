@@ -65,7 +65,7 @@ const makeAdaptive = (id: string, endpoints: string[]): CopilotModel => ({
 			tool_calls: true,
 			vision: true,
 			parallel_tool_calls: true,
-		} as Record<string, unknown>,
+		},
 	},
 	supported_endpoints: endpoints,
 })
