@@ -9,7 +9,7 @@ import {
 } from "./auth/token"
 import type { StoredAuth } from "./auth/types"
 import { fetchModels } from "./models/registry"
-import { copilotMessagesFetch, EFFORTS } from "./provider/fetch"
+import { copilotMessagesFetch } from "./provider/fetch"
 import { put } from "./provider/stash"
 
 type ModelWithVariants = Model & { variants?: Record<string, unknown> }
@@ -63,15 +63,10 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				pending.set(data.sessionID, entry)
 			}
 
-			// Variant remap: resolve effort from explicit option or variant name
-			const resolved = EFFORTS.has(explicit ?? "")
-				? (explicit as string)
-				: EFFORTS.has(variant ?? "")
-					? (variant as string)
-					: undefined
-			if (resolved && !(resolved === "max" && max)) {
+			const remap = variant === "high" || variant === "max" ? variant : undefined
+			if (remap) {
 				const entry = pending.get(data.sessionID) ?? {}
-				entry.effort = resolved
+				entry.effort = remap
 				pending.set(data.sessionID, entry)
 			}
 		},

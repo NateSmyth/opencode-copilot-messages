@@ -210,7 +210,7 @@ describe("CopilotMessagesPlugin hooks", () => {
 		expect(old.headers["x-adaptive-effort"]).toBeUndefined()
 	})
 
-	it("resolves effort from merged variant options via chat.params", async () => {
+	it("does not intercept SDK-valid effort values from options", async () => {
 		const hooks = (await CopilotMessagesPlugin({
 			client: {
 				session: { get: async () => ({ data: {} }) },
@@ -261,7 +261,7 @@ describe("CopilotMessagesPlugin hooks", () => {
 			} as never,
 			medium
 		)
-		expect(medium.headers["x-adaptive-effort"]).toBe("medium")
+		expect(medium.headers["x-adaptive-effort"]).toBeUndefined()
 
 		await hooks["chat.params"](
 			{
@@ -284,7 +284,7 @@ describe("CopilotMessagesPlugin hooks", () => {
 			} as never,
 			low
 		)
-		expect(low.headers["x-adaptive-effort"]).toBe("low")
+		expect(low.headers["x-adaptive-effort"]).toBeUndefined()
 
 		await hooks["chat.params"](
 			{
@@ -296,7 +296,7 @@ describe("CopilotMessagesPlugin hooks", () => {
 			} as never,
 			{ temperature: 0, topP: 0, topK: 0, options: { effort: "medium" } }
 		)
-		const override = { headers: {} as Record<string, string> }
+		const high = { headers: {} as Record<string, string> }
 		await hooks["chat.headers"](
 			{
 				sessionID: "s7",
@@ -305,9 +305,9 @@ describe("CopilotMessagesPlugin hooks", () => {
 				provider,
 				message: { variant: "high" },
 			} as never,
-			override
+			high
 		)
-		expect(override.headers["x-adaptive-effort"]).toBe("medium")
+		expect(high.headers["x-adaptive-effort"]).toBe("high")
 	})
 
 	it("adaptive effort header drives body rewrite end-to-end", async () => {
@@ -462,7 +462,10 @@ describe("CopilotMessagesPlugin hooks", () => {
 			output
 		)
 		// chat.params should swap to SDK-safe values
-		expect(output.options.thinking).toEqual({ type: "enabled", budgetTokens: 1024 })
+		expect(output.options.thinking).toEqual({
+			type: "enabled",
+			budgetTokens: 1024,
+		})
 
 		const res = { headers: {} as Record<string, string> }
 		await hooks["chat.headers"](
@@ -528,7 +531,10 @@ describe("CopilotMessagesPlugin hooks", () => {
 		)
 		// effort should be deleted, thinking set to SDK-safe
 		expect(output.options.effort).toBeUndefined()
-		expect(output.options.thinking).toEqual({ type: "enabled", budgetTokens: 1024 })
+		expect(output.options.thinking).toEqual({
+			type: "enabled",
+			budgetTokens: 1024,
+		})
 
 		const res = { headers: {} as Record<string, string> }
 		await hooks["chat.headers"](
