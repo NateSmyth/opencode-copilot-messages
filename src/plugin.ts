@@ -10,22 +10,12 @@ import {
 import type { StoredAuth } from "./auth/types"
 import { fetchModels } from "./models/registry"
 import { copilotMessagesFetch } from "./provider/fetch"
+import { put } from "./provider/stash"
 
 type ModelWithVariants = Model & { variants?: Record<string, unknown> }
 
-/**
- * OpenCode plugin for Copilot Claude via Anthropic Messages API.
- *
- * This plugin provides an alternate auth/routing path for Claude models
- * via Copilot's /v1/messages proxy endpoint (api.copilot.com/v1/messages).
- *
- * Key differences from standard Copilot:
- * - Uses client ID: Iv1.b507a08c87ecfe98
- * - Requires token exchange via /copilot_internal/v2/token
- * - Uses @ai-sdk/anthropic (Anthropic Messages API format)
- * - Critical: X-Initiator must check for tool_result content blocks
- */
 export const CopilotMessagesPlugin: Plugin = async (input) => {
+	const pending = new Map<string, { effort?: string; stash?: string }>()
 	const hooks = {
 		config: async (config: { provider?: Record<string, unknown> }) => {
 			if (!config.provider) {
@@ -40,6 +30,46 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				}
 			}
 		},
+		"chat.params": async (
+			data: {
+				sessionID: string
+				model: { providerID: string; options?: Record<string, unknown> }
+				message?: { variant?: string }
+			},
+			output: { options: Record<string, unknown> }
+		) => {
+			if (data.model.providerID !== "copilot-messages") return
+			if (data.model.options?.adaptiveThinking !== true) return
+
+			const thinking = output.options.thinking as { type?: string } | undefined
+			const explicit = output.options.effort as string | undefined
+			const variant = data.message?.variant
+
+			const adaptive = typeof thinking === "object" && thinking?.type === "adaptive"
+			const max = explicit === "max"
+
+			if (adaptive || max) {
+				const token = crypto.randomUUID()
+				const stashed: { thinking?: unknown; effort?: unknown } = {}
+				if (adaptive) stashed.thinking = structuredClone(thinking)
+				if (max) stashed.effort = explicit
+				put(token, stashed)
+
+				output.options.thinking = { type: "enabled", budgetTokens: 1024 }
+				if (max) delete output.options.effort
+
+				const entry = pending.get(data.sessionID) ?? {}
+				entry.stash = token
+				pending.set(data.sessionID, entry)
+			}
+
+			const remap = variant === "high" || variant === "max" ? variant : undefined
+			if (remap) {
+				const entry = pending.get(data.sessionID) ?? {}
+				entry.effort = remap
+				pending.set(data.sessionID, entry)
+			}
+		},
 		"chat.headers": async (
 			data: {
 				sessionID: string
@@ -50,6 +80,14 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 		) => {
 			const providerID = data.model.providerID
 			if (providerID !== "copilot-messages") return
+
+			const entry = pending.get(data.sessionID)
+			if (entry) {
+				pending.delete(data.sessionID)
+				if (entry.effort) output.headers["x-adaptive-effort"] = entry.effort
+				if (entry.stash) output.headers["x-adaptive-stash"] = entry.stash
+			}
+
 			const session = await input.client.session
 				.get({
 					path: {

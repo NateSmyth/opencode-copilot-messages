@@ -1,0 +1,48 @@
+domain: Model Registry — capability detection and mapping
+scope: Changes from feature branch feat/adaptive-thinking-4.6 against main
+date: 2026-02-08
+
+files_reviewed:
+  - src/models/registry.ts
+  - src/models/registry.test.ts
+summary:
+  total_findings: 1
+  by_severity:
+    critical: 0
+    high: 0
+    medium: 0
+    low: 0
+    info: 1
+  by_category:
+    bug: 0
+    security: 0
+    performance: 0
+    style: 0
+    structure: 1
+    convention: 0
+  assessment: |
+    The adaptive thinking mapping and defaults look correct and are covered by
+    targeted tests. The only gap is that structured_outputs is defined on the
+    model interface without any mapping or verification, which could confuse
+    consumers if they expect it to be actionable.
+
+findings:
+  - id: "model-registry-001"
+    status: open
+    severity: info
+    confidence: certain
+    category: structure
+    files:
+      - src/models/registry.ts
+      - src/models/registry.test.ts
+    title: "structured_outputs capability is declared but not surfaced"
+    description: |
+      The CopilotModel.supports interface now includes structured_outputs, but
+      mapToOpencodeModel does not expose any corresponding flag on the returned
+      Model (options or capabilities), and the tests do not verify any mapping.
+      If downstream logic needs to detect structured output support, this field
+      is currently non-functional and could be misleading.
+    suggestion: |
+      Either remove structured_outputs until it is used, or map it to a
+      Model-level flag (e.g., options.structuredOutputs or a capabilities flag)
+      and add a focused test for the mapping.

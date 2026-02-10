@@ -1,5 +1,6 @@
 import { buildHeaders } from "./headers"
 import { type AnthropicMessage, determineInitiator, hasImageContent } from "./initiator"
+import { take } from "./stash"
 
 export interface FetchContext {
 	sessionToken: string
@@ -13,6 +14,10 @@ export async function copilotMessagesFetch(
 	const headers = merge(input, init)
 	headers.delete("x-api-key")
 	const body = await readBody(init?.body)
+	const effort = parseEffort(headers.get("x-adaptive-effort"))
+	headers.delete("x-adaptive-effort")
+	const token = headers.get("x-adaptive-stash")
+	headers.delete("x-adaptive-stash")
 	const initiator =
 		forcedInitiator(headers.get("x-initiator")) ??
 		(isInternalAgent(body) ? "agent" : determineInitiator(body.messages))
@@ -27,8 +32,11 @@ export async function copilotMessagesFetch(
 		headers.set(key, value)
 	}
 
+	const rewritten = rewrite(body, token, effort)
+
 	return fetch(input, {
 		...init,
+		body: rewritten ?? init?.body,
 		headers,
 	})
 }
@@ -48,6 +56,8 @@ function merge(input: string | URL | Request, init: RequestInit | undefined): He
 interface ParsedBody {
 	messages: AnthropicMessage[]
 	system?: string | Array<{ type: string; text?: string }>
+	thinking?: { type: string; budget_tokens?: number }
+	raw?: Record<string, unknown>
 }
 
 async function readBody(body: RequestInit["body"] | null | undefined): Promise<ParsedBody> {
@@ -60,13 +70,44 @@ async function readBody(body: RequestInit["body"] | null | undefined): Promise<P
 
 function parse(text: string): ParsedBody {
 	try {
-		const parsed = JSON.parse(text) as { messages?: unknown; system?: unknown }
+		const parsed = JSON.parse(text) as Record<string, unknown>
 		const messages = Array.isArray(parsed.messages) ? (parsed.messages as AnthropicMessage[]) : []
 		const system = parsed.system as ParsedBody["system"]
-		return { messages, system }
+		const thinking = parsed.thinking as ParsedBody["thinking"]
+		return { messages, system, thinking, raw: parsed }
 	} catch {
 		return { messages: [] }
 	}
+}
+
+export type Effort = "low" | "medium" | "high" | "max"
+
+export const EFFORTS = new Set<string>(["low", "medium", "high", "max"])
+
+function parseEffort(value: string | null): Effort | null {
+	if (EFFORTS.has(value ?? "")) return value as Effort
+	return null
+}
+
+function rewrite(
+	body: ParsedBody,
+	token: string | null,
+	effort: Effort | null
+): string | undefined {
+	if (!body.raw) return undefined
+
+	if (token) {
+		const saved = take(token)
+		if (!saved) return undefined
+		if (saved.thinking) body.raw.thinking = saved.thinking
+		if (saved.effort) body.raw.output_config = { effort: saved.effort }
+		return JSON.stringify(body.raw)
+	}
+
+	if (!effort || body.thinking?.type !== "enabled") return undefined
+	body.raw.thinking = { type: "adaptive" }
+	body.raw.output_config = { effort }
+	return JSON.stringify(body.raw)
 }
 
 function isInternalAgent(body: ParsedBody): boolean {
