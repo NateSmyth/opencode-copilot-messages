@@ -415,6 +415,347 @@ describe("CopilotMessagesPlugin hooks", () => {
 		}
 	})
 
+	it("stashes and swaps when thinking.type is adaptive", async () => {
+		const hooks = (await CopilotMessagesPlugin({
+			client: {
+				session: { get: async () => ({ data: {} }) },
+			},
+		} as never)) as unknown as {
+			"chat.params"?: (
+				input: unknown,
+				output: {
+					temperature: number
+					topP: number
+					topK: number
+					options: Record<string, unknown>
+				}
+			) => Promise<void>
+			"chat.headers"?: (
+				input: unknown,
+				output: { headers: Record<string, string> }
+			) => Promise<void>
+		}
+		if (!hooks["chat.params"] || !hooks["chat.headers"]) {
+			throw new Error("missing hooks")
+		}
+
+		const model = {
+			providerID: "copilot-messages",
+			options: { adaptiveThinking: true },
+		}
+		const provider = { info: { id: "copilot-messages" } }
+
+		const output = {
+			temperature: 0,
+			topP: 0,
+			topK: 0,
+			options: { thinking: { type: "adaptive" } } as Record<string, unknown>,
+		}
+		await hooks["chat.params"](
+			{
+				sessionID: "stash1",
+				agent: "agent",
+				model,
+				provider,
+				message: {},
+			} as never,
+			output
+		)
+		// chat.params should swap to SDK-safe values
+		expect(output.options.thinking).toEqual({ type: "enabled", budgetTokens: 1024 })
+
+		const res = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"](
+			{
+				sessionID: "stash1",
+				agent: "agent",
+				model,
+				provider,
+				message: {},
+			} as never,
+			res
+		)
+		// should emit a UUID stash token
+		expect(res.headers["x-adaptive-stash"]).toBeDefined()
+		expect(res.headers["x-adaptive-stash"].length).toBeGreaterThan(0)
+	})
+
+	it("stashes and swaps when effort is max", async () => {
+		const hooks = (await CopilotMessagesPlugin({
+			client: {
+				session: { get: async () => ({ data: {} }) },
+			},
+		} as never)) as unknown as {
+			"chat.params"?: (
+				input: unknown,
+				output: {
+					temperature: number
+					topP: number
+					topK: number
+					options: Record<string, unknown>
+				}
+			) => Promise<void>
+			"chat.headers"?: (
+				input: unknown,
+				output: { headers: Record<string, string> }
+			) => Promise<void>
+		}
+		if (!hooks["chat.params"] || !hooks["chat.headers"]) {
+			throw new Error("missing hooks")
+		}
+
+		const model = {
+			providerID: "copilot-messages",
+			options: { adaptiveThinking: true },
+		}
+		const provider = { info: { id: "copilot-messages" } }
+
+		const output = {
+			temperature: 0,
+			topP: 0,
+			topK: 0,
+			options: { effort: "max" } as Record<string, unknown>,
+		}
+		await hooks["chat.params"](
+			{
+				sessionID: "stash2",
+				agent: "agent",
+				model,
+				provider,
+				message: {},
+			} as never,
+			output
+		)
+		// effort should be deleted, thinking set to SDK-safe
+		expect(output.options.effort).toBeUndefined()
+		expect(output.options.thinking).toEqual({ type: "enabled", budgetTokens: 1024 })
+
+		const res = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"](
+			{
+				sessionID: "stash2",
+				agent: "agent",
+				model,
+				provider,
+				message: {},
+			} as never,
+			res
+		)
+		expect(res.headers["x-adaptive-stash"]).toBeDefined()
+	})
+
+	it("does not emit stash header when no forward-compat values", async () => {
+		const hooks = (await CopilotMessagesPlugin({
+			client: {
+				session: { get: async () => ({ data: {} }) },
+			},
+		} as never)) as unknown as {
+			"chat.params"?: (
+				input: unknown,
+				output: {
+					temperature: number
+					topP: number
+					topK: number
+					options: Record<string, unknown>
+				}
+			) => Promise<void>
+			"chat.headers"?: (
+				input: unknown,
+				output: { headers: Record<string, string> }
+			) => Promise<void>
+		}
+		if (!hooks["chat.params"] || !hooks["chat.headers"]) {
+			throw new Error("missing hooks")
+		}
+
+		const model = {
+			providerID: "copilot-messages",
+			options: { adaptiveThinking: true },
+		}
+		const provider = { info: { id: "copilot-messages" } }
+
+		await hooks["chat.params"](
+			{
+				sessionID: "stash3",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "high" },
+			} as never,
+			{ temperature: 0, topP: 0, topK: 0, options: {} }
+		)
+		const res = { headers: {} as Record<string, string> }
+		await hooks["chat.headers"](
+			{
+				sessionID: "stash3",
+				agent: "agent",
+				model,
+				provider,
+				message: { variant: "high" },
+			} as never,
+			res
+		)
+		expect(res.headers["x-adaptive-stash"]).toBeUndefined()
+		// should still have effort header for variant remap
+		expect(res.headers["x-adaptive-effort"]).toBe("high")
+	})
+
+	it("stash-driven fetch swap restores user config end-to-end", async () => {
+		const hooks = (await CopilotMessagesPlugin({
+			client: {
+				session: { get: async () => ({ data: {} }) },
+				auth: { set: async () => {} },
+			},
+		} as never)) as unknown as {
+			"chat.params"?: (
+				input: unknown,
+				output: {
+					temperature: number
+					topP: number
+					topK: number
+					options: Record<string, unknown>
+				}
+			) => Promise<void>
+			"chat.headers"?: (
+				input: unknown,
+				output: { headers: Record<string, string> }
+			) => Promise<void>
+			auth?: {
+				loader?: (
+					auth: () => Promise<unknown>,
+					provider: unknown
+				) => Promise<Record<string, unknown>>
+			}
+		}
+		if (!hooks["chat.params"] || !hooks["chat.headers"] || !hooks.auth?.loader) {
+			throw new Error("missing hooks")
+		}
+
+		const auth = {
+			type: "oauth" as const,
+			refresh: "gho_test",
+			access: "session_old",
+			expires: Date.now() + 60_000,
+		}
+
+		const captured: Record<string, unknown> = {}
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				const url = new URL(req.url)
+				if (url.pathname === "/copilot_internal/v2/token") {
+					return Response.json({
+						token: "tid=1;exp=999:mac",
+						expires_at: Math.floor(Date.now() / 1000) + 600,
+						refresh_in: 120,
+					})
+				}
+				if (url.pathname === "/models") {
+					return Response.json({ data: [] })
+				}
+				if (url.pathname === "/v1/messages") {
+					const body = (await req.json()) as Record<string, unknown>
+					captured.thinking = body.thinking
+					captured.output_config = body.output_config
+					captured.stash_header = req.headers.get("x-adaptive-stash")
+					return Response.json({ ok: true })
+				}
+				return new Response("not-found", { status: 404 })
+			},
+		})
+
+		const base = `http://127.0.0.1:${server.port}`
+		const original = globalThis.fetch
+		const forward = async (input: string | URL | Request, init?: RequestInit) => {
+			const req = input instanceof Request ? input : new Request(input.toString(), init)
+			const url = new URL(req.url)
+			const target = new URL(url.pathname + url.search, base)
+			return original(
+				new Request(target.toString(), {
+					method: req.method,
+					headers: req.headers,
+					body: req.body,
+				})
+			)
+		}
+		globalThis.fetch = Object.assign(forward, {
+			preconnect: original.preconnect ?? (() => {}),
+		}) as typeof fetch
+
+		try {
+			const model = {
+				providerID: "copilot-messages",
+				options: { adaptiveThinking: true },
+			}
+			const provider = { info: { id: "copilot-messages" } }
+
+			// Step 1: chat.params with forward-compat config
+			const output = {
+				temperature: 0,
+				topP: 0,
+				topK: 0,
+				options: {
+					thinking: { type: "adaptive" },
+					effort: "max",
+				} as Record<string, unknown>,
+			}
+			await hooks["chat.params"](
+				{
+					sessionID: "e2e1",
+					agent: "agent",
+					model,
+					provider,
+					message: {},
+				} as never,
+				output
+			)
+
+			// Step 2: chat.headers captures stash token
+			const hdrs = { headers: {} as Record<string, string> }
+			await hooks["chat.headers"](
+				{
+					sessionID: "e2e1",
+					agent: "agent",
+					model,
+					provider,
+					message: {},
+				} as never,
+				hdrs
+			)
+			const token = hdrs.headers["x-adaptive-stash"]
+			expect(token).toBeDefined()
+
+			// Step 3: send through fetch with SDK-generated body (post-swap)
+			const res = await hooks.auth.loader(async () => auth, { models: {} })
+			const doFetch = res.fetch as (req: string, init: RequestInit) => Promise<Response>
+
+			const body = JSON.stringify({
+				model: "claude-opus-4-6",
+				thinking: { type: "enabled", budget_tokens: 1024 },
+				max_tokens: 32000,
+				messages: [{ role: "user", content: "hello" }],
+			})
+
+			await doFetch(`${base}/v1/messages`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					"x-adaptive-stash": token,
+				},
+				body,
+			})
+
+			// Server should see stashed user config restored
+			expect(captured.thinking).toEqual({ type: "adaptive" })
+			expect(captured.output_config).toEqual({ effort: "max" })
+			// Stash header must not leak to server
+			expect(captured.stash_header).toBe(null)
+		} finally {
+			server.stop()
+			globalThis.fetch = original
+		}
+	})
+
 	it("auth loader returns init config and wires fetch", async () => {
 		const auth = {
 			type: "oauth",
