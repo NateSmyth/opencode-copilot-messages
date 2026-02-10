@@ -34,11 +34,11 @@
 
 ### Phase: REFACTOR
 
-- [ ] [T07] Cleanup: tighten types/guards, remove dead tests/branches, keep naming/style consistent
+- [x] [T07] Cleanup: tighten types/guards, remove dead tests/branches, keep naming/style consistent
 
 ---
 
-- [ ] **COMMIT**: `refactor: simplify adaptive stash plumbing`
+- [x] **COMMIT**: `refactor: simplify adaptive stash plumbing`
 
 ## Summary
 

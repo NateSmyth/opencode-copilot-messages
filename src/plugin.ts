@@ -45,7 +45,6 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 			const explicit = output.options.effort as string | undefined
 			const variant = data.message?.variant
 
-			// Forward-compat: detect values the legacy SDK would reject
 			const adaptive = typeof thinking === "object" && thinking?.type === "adaptive"
 			const max = explicit === "max"
 
@@ -56,7 +55,6 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				if (max) stashed.effort = explicit
 				put(token, stashed)
 
-				// Swap to SDK-safe values
 				output.options.thinking = { type: "enabled", budgetTokens: 1024 }
 				if (max) delete output.options.effort
 
@@ -65,21 +63,15 @@ export const CopilotMessagesPlugin: Plugin = async (input) => {
 				pending.set(data.sessionID, entry)
 			}
 
-			// Built-in variant remap (separate concern)
-			const resolvedEffort = EFFORTS.has(explicit ?? "")
+			// Variant remap: resolve effort from explicit option or variant name
+			const resolved = EFFORTS.has(explicit ?? "")
 				? (explicit as string)
 				: EFFORTS.has(variant ?? "")
 					? (variant as string)
 					: undefined
-			if (resolvedEffort && resolvedEffort !== "max") {
+			if (resolved && !(resolved === "max" && max)) {
 				const entry = pending.get(data.sessionID) ?? {}
-				entry.effort = resolvedEffort
-				pending.set(data.sessionID, entry)
-			}
-			// "max" as variant triggers stash path above, effort header uses "max"
-			if (resolvedEffort === "max" && !max) {
-				const entry = pending.get(data.sessionID) ?? {}
-				entry.effort = resolvedEffort
+				entry.effort = resolved
 				pending.set(data.sessionID, entry)
 			}
 		},

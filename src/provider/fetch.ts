@@ -96,7 +96,6 @@ function rewrite(
 ): string | undefined {
 	if (!body.raw) return undefined
 
-	// Stash path: restore user's literal config
 	if (token) {
 		const saved = take(token)
 		if (!saved) return undefined
@@ -105,7 +104,6 @@ function rewrite(
 		return JSON.stringify(body.raw)
 	}
 
-	// Effort-header path: full swap
 	if (!effort || body.thinking?.type !== "enabled") return undefined
 	body.raw.thinking = { type: "adaptive" }
 	body.raw.output_config = { effort }
