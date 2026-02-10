@@ -1,5 +1,6 @@
 import { buildHeaders } from "./headers"
 import { type AnthropicMessage, determineInitiator, hasImageContent } from "./initiator"
+import { take } from "./stash"
 
 export interface FetchContext {
 	sessionToken: string
@@ -15,6 +16,8 @@ export async function copilotMessagesFetch(
 	const body = await readBody(init?.body)
 	const effort = parseEffort(headers.get("x-adaptive-effort"))
 	headers.delete("x-adaptive-effort")
+	const token = headers.get("x-adaptive-stash")
+	headers.delete("x-adaptive-stash")
 	const initiator =
 		forcedInitiator(headers.get("x-initiator")) ??
 		(isInternalAgent(body) ? "agent" : determineInitiator(body.messages))
@@ -29,10 +32,7 @@ export async function copilotMessagesFetch(
 		headers.set(key, value)
 	}
 
-	const rewritten =
-		effort && body.thinking?.type === "enabled" && body.raw
-			? rewriteBody(body.raw, effort)
-			: undefined
+	const rewritten = rewrite(body, token, effort)
 
 	return fetch(input, {
 		...init,
@@ -89,11 +89,27 @@ function parseEffort(value: string | null): Effort | null {
 	return null
 }
 
-function rewriteBody(parsed: Record<string, unknown>, effort: Effort): string {
-	parsed.thinking = { type: "adaptive" }
-	const existing = (typeof parsed.output_config === "object" && parsed.output_config) || {}
-	parsed.output_config = { ...(existing as Record<string, unknown>), effort }
-	return JSON.stringify(parsed)
+function rewrite(
+	body: ParsedBody,
+	token: string | null,
+	effort: Effort | null
+): string | undefined {
+	if (!body.raw) return undefined
+
+	// Stash path: restore user's literal config
+	if (token) {
+		const saved = take(token)
+		if (!saved) return undefined
+		if (saved.thinking) body.raw.thinking = saved.thinking
+		if (saved.effort) body.raw.output_config = { effort: saved.effort }
+		return JSON.stringify(body.raw)
+	}
+
+	// Effort-header path: full swap
+	if (!effort || body.thinking?.type !== "enabled") return undefined
+	body.raw.thinking = { type: "adaptive" }
+	body.raw.output_config = { effort }
+	return JSON.stringify(body.raw)
 }
 
 function isInternalAgent(body: ParsedBody): boolean {

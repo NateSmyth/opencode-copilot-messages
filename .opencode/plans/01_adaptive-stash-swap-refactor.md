@@ -16,19 +16,19 @@
 
 ---
 
-- [ ] **COMMIT**: `test: cover adaptive stash swap` ← NEXT
+- [x] **COMMIT**: `test: cover adaptive stash swap`
 
 ---
 
 ### Phase: GREEN
 
-- [ ] [T04] Implement shared stash store + token plumbing
-- [ ] [T05] Refactor `src/plugin.ts` to detect/stash/swap and simplify effort remap
-- [ ] [T06] Refactor `src/provider/fetch.ts` to swap stashed config into request body
+- [x] [T04] Implement shared stash store + token plumbing
+- [x] [T05] Refactor `src/plugin.ts` to detect/stash/swap and simplify effort remap
+- [x] [T06] Refactor `src/provider/fetch.ts` to swap stashed config into request body
 
 ---
 
-- [ ] **COMMIT**: `refactor: swap adaptive config via stash token`
+- [x] **COMMIT**: `refactor: swap adaptive config via stash token`
 
 ---
 
