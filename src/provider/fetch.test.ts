@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { copilotMessagesFetch } from "./fetch"
+import { put } from "./stash"
 
 describe("copilotMessagesFetch", () => {
 	it("strips x-api-key and injects copilot headers", async () => {
@@ -457,14 +458,15 @@ describe("copilotMessagesFetch", () => {
 		}
 	})
 
-	it("preserves existing output_config fields during rewrite", async () => {
+	it("replaces output_config during effort rewrite (full swap, no merge)", async () => {
 		const server = Bun.serve({
 			port: 0,
 			fetch: async (req) => {
 				const sent = (await req.json()) as Record<string, unknown>
 				const config = sent.output_config as Record<string, unknown>
 				expect(config.effort).toBe("high")
-				expect(config.format).toBe("json")
+				// full swap: pre-existing fields are NOT preserved
+				expect(config.format).toBeUndefined()
 				return new Response("ok")
 			},
 		})
@@ -533,6 +535,93 @@ describe("copilotMessagesFetch", () => {
 			} finally {
 				server.stop()
 			}
+		}
+	})
+
+	it("rewrites body from stash token via x-adaptive-stash header", async () => {
+		const token = crypto.randomUUID()
+		put(token, { thinking: { type: "adaptive" }, effort: "max" })
+
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				const sent = (await req.json()) as Record<string, unknown>
+				const thinking = sent.thinking as Record<string, unknown>
+				expect(thinking.type).toBe("adaptive")
+				expect(thinking.budget_tokens).toBeUndefined()
+				const config = sent.output_config as Record<string, unknown>
+				expect(config.effort).toBe("max")
+				// stash header must not leak
+				expect(req.headers.get("x-adaptive-stash")).toBe(null)
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			model: "claude-opus-4-6",
+			thinking: { type: "enabled", budget_tokens: 1024 },
+			max_tokens: 32000,
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						"x-adaptive-stash": token,
+					},
+					body,
+				},
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
+		}
+	})
+
+	it("stash rewrite works without x-adaptive-effort header", async () => {
+		const token = crypto.randomUUID()
+		put(token, { thinking: { type: "adaptive" } })
+
+		const server = Bun.serve({
+			port: 0,
+			fetch: async (req) => {
+				const sent = (await req.json()) as Record<string, unknown>
+				const thinking = sent.thinking as Record<string, unknown>
+				expect(thinking.type).toBe("adaptive")
+				// no effort stashed, so no output_config
+				expect(sent.output_config).toBeUndefined()
+				return new Response("ok")
+			},
+		})
+		const url = `http://127.0.0.1:${server.port}`
+		const body = JSON.stringify({
+			model: "claude-opus-4-6",
+			thinking: { type: "enabled", budget_tokens: 1024 },
+			max_tokens: 32000,
+			messages: [{ role: "user", content: "hello" }],
+		})
+
+		try {
+			const res = await copilotMessagesFetch(
+				url,
+				{
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						"x-adaptive-stash": token,
+					},
+					body,
+				},
+				{ sessionToken: "session_test" }
+			)
+			expect(res.ok).toBe(true)
+		} finally {
+			server.stop()
 		}
 	})
 })
