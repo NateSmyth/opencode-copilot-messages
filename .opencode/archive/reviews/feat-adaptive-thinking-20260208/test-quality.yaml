@@ -1,0 +1,147 @@
+domain: Test Quality
+scope: Changes from feat/adaptive-thinking-4.6 against main
+date: 2026-02-09
+
+files_reviewed:
+  - src/models/registry.test.ts
+  - src/plugin.test.ts
+  - src/provider/fetch.test.ts
+  - src/plugin.ts
+  - src/provider/fetch.ts
+  - src/models/registry.ts
+
+summary:
+  total_findings: 6
+  by_severity:
+    critical: 0
+    high: 0
+    medium: 2
+    low: 4
+    info: 0
+  by_category:
+    bug: 0
+    security: 0
+    performance: 0
+    style: 1
+    structure: 5
+    convention: 0
+  assessment: |
+    The test suite covers the core adaptive thinking paths, but several edge
+    cases remain unverified, particularly around body parsing and session effort
+    state handling. The global fetch monkey-patch in the integration test also
+    introduces a potential source of flakiness. Overall, the coverage is solid
+    for happy paths but needs additional negative and concurrency-focused tests
+    to meet the stated TDD expectations.
+
+findings:
+  - id: "test-quality-001"
+    status: open
+    severity: medium
+    confidence: certain
+    category: structure
+    files:
+      - src/provider/fetch.ts
+      - src/provider/fetch.test.ts
+    title: "ReadableStream body path for adaptive rewrite is untested"
+    description: |
+      copilotMessagesFetch only rewrites the body when readBody() produces a parsed
+      JSON object with raw/thinking fields. readBody() currently returns an empty
+      ParsedBody for ReadableStream bodies, which means the x-adaptive-effort header
+      is stripped but the request body is never rewritten. There is no test that
+      exercises this body type, so the observed behavior (drop header and skip
+      rewrite) is unverified.
+    suggestion: |
+      Add a test that sends a ReadableStream body with x-adaptive-effort set and
+      assert the intended behavior (either rewrite or header preservation).
+
+  - id: "test-quality-002"
+    status: open
+    severity: medium
+    confidence: certain
+    category: structure
+    files:
+      - src/plugin.ts
+      - src/plugin.test.ts
+    title: "Pending effort map edge cases are not covered"
+    description: |
+      chat.params stores effort in a Map keyed by sessionID, and chat.headers
+      later consumes it. Current tests only cover the happy path where headers
+      follow params. There is no test for orphaned entries (chat.params called
+      but chat.headers never called) or for multiple params calls with the same
+      sessionID before headers. These cases could lead to stale or incorrect
+      effort being applied across requests, but they are not exercised.
+    suggestion: |
+      Add tests that (1) call chat.params without chat.headers and verify no
+      unexpected effort is applied later, and (2) call chat.params twice with the
+      same sessionID to ensure the last effort wins and map cleanup is correct.
+
+  - id: "test-quality-003"
+    status: open
+    severity: low
+    confidence: certain
+    category: structure
+    files:
+      - src/provider/fetch.ts
+      - src/provider/fetch.test.ts
+    title: "Invalid or malformed effort header values are not tested"
+    description: |
+      parseEffort only accepts the four known effort levels, but there is no
+      test that validates behavior for invalid values (e.g., "hi", "HIGH", or
+      whitespace). The header is always removed; whether that is intended is not
+      asserted in tests.
+    suggestion: |
+      Add a negative test that sets x-adaptive-effort to an invalid value and
+      assert the expected behavior (no rewrite and whether the header should be
+      preserved or stripped).
+
+  - id: "test-quality-004"
+    status: open
+    severity: low
+    confidence: certain
+    category: structure
+    files:
+      - src/provider/fetch.ts
+      - src/provider/fetch.test.ts
+    title: 'Non-"enabled" thinking types are not explicitly tested'
+    description: |
+      Tests cover thinking.type === "enabled" and a case with no thinking object,
+      but do not cover other explicit values (e.g., "disabled"). The rewrite
+      condition is strict, so this behavior should be asserted to prevent
+      regressions.
+    suggestion: |
+      Add a test with thinking.type set to a non-enabled value to verify that
+      no rewrite occurs and output_config remains unchanged.
+
+  - id: "test-quality-005"
+    status: open
+    severity: medium
+    confidence: likely
+    category: structure
+    files:
+      - src/plugin.test.ts
+    title: "Global fetch monkey-patching risks cross-test interference"
+    description: |
+      The end-to-end test replaces globalThis.fetch to redirect requests to a
+      local server. While it restores fetch in a finally block, Bun runs tests
+      in parallel across files by default, so global mutation can still leak
+      into other tests during execution and cause flakiness.
+    suggestion: |
+      Isolate this test by running it serially or by using a scoped fetch
+      injection pattern so other tests never observe the patched global.
+
+  - id: "test-quality-006"
+    status: open
+    severity: low
+    confidence: certain
+    category: style
+    files:
+      - src/plugin.test.ts
+      - src/provider/fetch.test.ts
+    title: "Repeated server/fixture boilerplate reduces test clarity"
+    description: |
+      Multiple tests re-create near-identical Bun.serve scaffolding and request
+      setup. The repetition makes the files long and harder to scan, which can
+      obscure the intent of individual assertions.
+    suggestion: |
+      Consider a small helper to spin up a test server and issue a request,
+      keeping the assertions local to each test while reducing boilerplate.

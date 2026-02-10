@@ -1,0 +1,62 @@
+domain: Fetch Layer & Body Rewrite — request body transformation for adaptive thinking
+scope: Changes from feature branch `feat/adaptive-thinking-4.6` against `main`
+date: 2026-02-08
+
+files_reviewed:
+  - src/provider/fetch.ts
+  - src/provider/fetch.test.ts
+summary:
+  total_findings: 2
+  by_severity:
+    critical: 0
+    high: 0
+    medium: 0
+    low: 1
+    info: 1
+  by_category:
+    bug: 0
+    security: 0
+    performance: 0
+    style: 0
+    structure: 1
+    convention: 1
+  assessment: |
+    The adaptive thinking rewrite is narrowly scoped and the added tests cover the intended request
+    transformation and header stripping. The main risk is structural: the parsed body caches `thinking`
+    separately from the raw payload, so post-rewrite state can become inconsistent if future logic reuses
+    `body.thinking`.
+
+findings:
+  - id: "fetch-rewrite-001"
+    status: open
+    severity: info
+    confidence: certain
+    category: structure
+    files:
+      - src/provider/fetch.ts
+    title: "ParsedBody thinking cache can diverge after rewrite"
+    description: |
+      rewriteBody mutates the raw parsed payload and replaces `parsed.thinking`, but ParsedBody also stores a
+      separate `thinking` reference created during parse. After rewrite, `body.raw.thinking` becomes
+      `{ type: "adaptive" }` while `body.thinking` still points to the original `{ type: "enabled" }` object.
+      The current flow does not read `body.thinking` after rewrite, but any future logic that inspects
+      `body.thinking` would see stale data and potentially make incorrect decisions.
+    suggestion: |
+      Either avoid caching `thinking` separately (derive from `raw` when needed) or keep `body.thinking` in
+      sync when rewriting.
+
+  - id: "fetch-rewrite-002"
+    status: open
+    severity: low
+    confidence: certain
+    category: convention
+    files:
+      - src/provider/fetch.ts
+    title: "EFFORTS typed as Set<string> forces casts to Effort"
+    description: |
+      EFFORTS is declared as `Set<string>`, which makes parseEffort and callers rely on `as Effort` casts to
+      recover the narrower type. This weakens type safety and deviates from the codebase’s preference for
+      inference and minimal casting.
+    suggestion: |
+      Declare the set as `new Set<Effort>(...)` (or infer from a typed readonly array) and let parseEffort
+      return the value without casts.

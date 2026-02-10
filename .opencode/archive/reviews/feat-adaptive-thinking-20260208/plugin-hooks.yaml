@@ -1,0 +1,84 @@
+domain: Plugin Hooks — effort resolution via chat.params and chat.headers signaling
+scope: Changes from feature branch feat/adaptive-thinking-4.6 against main
+date: 2026-02-08
+
+files_reviewed:
+  - src/plugin.ts
+  - src/plugin.test.ts
+
+summary:
+  total_findings: 3
+  by_severity:
+    critical: 0
+    high: 0
+    medium: 1
+    low: 2
+    info: 0
+  by_category:
+    bug: 1
+    security: 0
+    performance: 1
+    style: 0
+    structure: 1
+    convention: 0
+  assessment: |
+    The effort resolution logic is straightforward and the tests cover the primary
+    priority rules, but the session-scoped pending map can misapply effort under
+    concurrent requests and can retain stale entries if headers never run. The
+    integration test’s global fetch patch is functional but fragile for parallel runs.
+
+findings:
+  - id: "plugin-hooks-001"
+    status: open
+    severity: medium
+    confidence: certain
+    category: bug
+    files:
+      - src/plugin.ts
+    title: "Effort side-channel can misapply under concurrent requests"
+    description: |
+      The pending effort map is keyed only by sessionID. If two requests for the same
+      session overlap (or hooks interleave), the later chat.params overwrites the
+      effort for the earlier request. When the earlier chat.headers runs, it can
+      pick up the wrong effort and set an incorrect x-adaptive-effort header, changing
+      the model’s reasoning budget unexpectedly.
+    suggestion: |
+      Correlate effort to a request-unique key (message ID, event ID, or counter) or
+      store a per-session queue and consume entries in order. If the plugin API exposes
+      a request-scoped object, attach effort there instead of a session-wide map.
+
+  - id: "plugin-hooks-002"
+    status: open
+    severity: low
+    confidence: certain
+    category: performance
+    files:
+      - src/plugin.ts
+    title: "Pending effort entries persist if chat.headers is skipped"
+    description: |
+      Entries are only removed when chat.headers runs and sees a pending value. If a
+      request fails or is aborted before chat.headers, the pending Map retains the
+      session entry indefinitely. Over time this can accumulate across many sessions,
+      and a later request may consume a stale effort if headers eventually run.
+    suggestion: |
+      Add a cleanup strategy (e.g., timestamp entries and sweep periodically, or
+      delete on session end if available). Consider overwriting with a timestamped
+      entry and expiring old values before use.
+
+  - id: "plugin-hooks-003"
+    status: open
+    severity: low
+    confidence: likely
+    category: structure
+    files:
+      - src/plugin.test.ts
+    title: "Integration test mutates global fetch, risking cross-test interference"
+    description: |
+      The end-to-end test replaces globalThis.fetch to forward requests to the local
+      server. Any concurrent tests in the same process that depend on fetch will
+      observe the patched implementation, which can cause flaky or order-dependent
+      failures.
+    suggestion: |
+      Isolate fetch patching to a serial test or inject a fetch implementation into
+      the code under test (e.g., pass a fetch override through the auth loader) so
+      tests do not rely on global mutation.
