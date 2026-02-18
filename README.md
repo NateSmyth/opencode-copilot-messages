@@ -1,21 +1,25 @@
-# OpenCode Packages Monorepo
+# OpenCode Copilot Plugins
 
-This repository is a Bun workspace monorepo for OpenCode-related packages.
+Monorepo for Copilot-related Opencode plugins.
 
-## Workspace Layout
+## Packages
 
-- `packages/opencode-copilot-messages`: Copilot Messages API provider plugin for OpenCode
+### `opencode-copilot-messages`: Copilot Messages API provider plugin for OpenCode
 
-Add new packages under `packages/` so they are picked up automatically by workspace and Turbo scripts.
+#### Quickstart
 
-## Commands
+Add to the `plugin` array in `opencode.json` or `opencode.jsonc`:
 
-Run from repository root:
+```json
+  "plugin": [
+    "opencode-copilot-messages@latest"
+  ]
+```
 
-- `bun run build`
-- `bun run test`
-- `bun run typecheck`
-- `bun run lint`
-- `bun run format`
+1. Run `opencode auth login`
+2. Search or scroll to "other"
+3. Enter "copilot-messages"
+4. Finish OAuth flow in browser
+5. Launch opencode
 
-For package-specific usage and configuration, see `packages/opencode-copilot-messages/README.md`.
+For optional configuration and additional details, see the [README](packages/opencode-copilot-messages/README.md).
