@@ -1,0 +1,25 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"globalDependencies": ["biome.json", "tsconfig.base.json", "tsconfig.build.base.json"],
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"outputs": ["dist/**"]
+		},
+		"typecheck": {
+			"outputs": []
+		},
+		"lint": {
+			"outputs": []
+		},
+		"lint:fix": {
+			"cache": false
+		},
+		"format": {
+			"cache": false
+		},
+		"test": {
+			"outputs": []
+		}
+	}
+}

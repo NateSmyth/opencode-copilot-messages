@@ -1,0 +1,43 @@
+{
+	"name": "opencode-copilot-messages",
+	"version": "0.1.0",
+	"description": "OpenCode plugin for Copilot Claude via Anthropic Messages API (/v1/messages)",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"dist/",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"build": "bun run clean:dist && tsc -p tsconfig.build.json",
+		"clean:dist": "bun -e \"import { rm } from 'node:fs/promises'; await rm('dist', { recursive: true, force: true })\"",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"test": "bun test",
+		"preflight": "bun test && bun run typecheck && bun run lint",
+		"release:patch": "bun run preflight && npm version patch && npm publish && git push --follow-tags",
+		"release:minor": "bun run preflight && npm version minor && npm publish && git push --follow-tags",
+		"release:major": "bun run preflight && npm version major && npm publish && git push --follow-tags",
+		"prepublishOnly": "bun run build"
+	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "2.0.58",
+		"@opencode-ai/plugin": "^1.1.48"
+	},
+	"devDependencies": {
+		"@opencode-ai/sdk": "1.1.48",
+		"@types/bun": "latest",
+		"typescript": "^5.0.0"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}

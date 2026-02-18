@@ -1,6 +1,8 @@
 node_modules/
 dist/
+.turbo/
 *.log
 .env
 .DS_Store
 .worktrees/
+.opencode/reference
