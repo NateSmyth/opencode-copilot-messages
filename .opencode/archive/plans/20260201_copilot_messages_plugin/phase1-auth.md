@@ -4,7 +4,7 @@
 
 ### Baseline
 
-- [x] [T01] Verify baseline green in worktree (`bun test`, `bun run typecheck`)
+- [x] [T01] Verify baseline green in worktree (`bun test`, `bun run check`)
 
 ### Phase: RED (Device Code OAuth)
 
@@ -78,7 +78,7 @@ Given a GitHub OAuth device-code flow and a GitHub token, when we request a devi
 
 - [T01] Run:
   - `bun test`
-  - `bun run typecheck`
+  - `bun run check`
 
 ### Device Code OAuth Flow (src/auth/oauth.ts)
 
@@ -323,5 +323,5 @@ Expected test counts:
 ## Verification
 
 - [ ] `bun test`
-- [ ] `bun run typecheck`
+- [ ] `bun run check`
 - [ ] `bun run lint`

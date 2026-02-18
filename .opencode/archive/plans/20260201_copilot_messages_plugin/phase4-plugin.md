@@ -10,7 +10,7 @@
 
 ### [Phase: BASELINE]
 
-- [x] [T00] Verify baseline is clean in worktree (`bun test`, `bun run typecheck`, `bun run lint`).
+- [x] [T00] Verify baseline is clean in worktree (`bun test`, `bun run check`, `bun run lint`).
 
 ---
 
@@ -212,7 +212,7 @@ Given OpenCode loads this npm plugin, when configuration is applied and a Copilo
 ## Verification
 
 - [ ] All tests pass (`bun test`)
-- [ ] No type errors (`bun run typecheck`)
+- [ ] No type errors (`bun run check`)
 - [ ] Lint clean (`bun run lint`)
 - [ ] Manual (local OpenCode): add plugin to `opencode.json` and verify:
   - provider appears as `copilot-messages`

@@ -57,7 +57,7 @@ Reorganize this repo from a single package into a monorepo that keeps `opencode-
 
 1. Run current root checks to establish no-regression baseline:
    - `bun test`
-   - `bun run typecheck`
+   - `bun run check`
    - `bun run lint`
 2. If any unexpected failures exist, stop and report before migration.
 
@@ -70,12 +70,12 @@ Reorganize this repo from a single package into a monorepo that keeps `opencode-
      - `build`: `turbo run build`
      - `test`: `turbo run test`
      - `lint`: `turbo run lint`
-     - `typecheck`: `turbo run typecheck`
+     - `check`: `turbo run check`
      - `format`: `turbo run format`
    - Keep shared tooling devDependencies at root (`turbo`, `typescript`, `@biomejs/biome`, `husky`, `lint-staged`, etc.)
 2. Create `turbo.json` with tasks:
    - `build` depends on `^build`, outputs `dist/**`
-   - `test`, `lint`, `typecheck`, `format` as cache-safe non-output tasks
+   - `test`, `lint`, `check`, `format` as cache-safe non-output tasks
    - Add `globalDependencies` for root configs (`biome.json`, `tsconfig.base.json`, `tsconfig.build.base.json`)
 
 ### 3) Introduce Shared Configs
@@ -106,7 +106,7 @@ Reorganize this repo from a single package into a monorepo that keeps `opencode-
    - keep test exclusions
 3. In `packages/opencode-copilot-messages/package.json`:
    - Keep package identity/publish fields unchanged (`name`, `version`, `main`, `types`, `files`, `publishConfig`)
-   - Keep package scripts (`build`, `test`, `typecheck`, `lint`, `format`, release scripts) package-local
+   - Keep package scripts (`build`, `test`, `check`, `lint`, `format`, release scripts) package-local
    - Remove `prepare` from package (Husky should be root-owned)
    - Remove package-local `lint-staged` block if moving fully to root lint-staged
 
@@ -129,7 +129,7 @@ Reorganize this repo from a single package into a monorepo that keeps `opencode-
 
 Define the template for the next package under `packages/<new-name>/`:
 
-- package-local `package.json` with `build/test/typecheck/lint/format`
+- package-local `package.json` with `build/test/check/lint/format`
 - `tsconfig.json` extending `../../tsconfig.base.json`
 - `tsconfig.build.json` extending shared build base
 - `src/` entrypoint
@@ -142,8 +142,8 @@ Define the template for the next package under `packages/<new-name>/`:
    - Expect one root `bun.lock` updated for workspaces.
 2. `bun run lint` (root)
    - Expect turbo to run lint in `packages/opencode-copilot-messages` successfully.
-3. `bun run typecheck` (root)
-   - Expect package typecheck to pass unchanged.
+3. `bun run check` (root)
+   - Expect package check to pass unchanged.
 4. `bun run test` (root)
    - Expect all existing tests to pass unchanged.
 5. `bun run build` (root)
@@ -161,7 +161,7 @@ Define the template for the next package under `packages/<new-name>/`:
 
 ## Risks And Mitigations
 
-- Root/package script drift: keep script names consistent (`build/test/typecheck/lint/format`) across packages.
+- Root/package script drift: keep script names consistent (`build/test/check/lint/format`) across packages.
 - Missing package license after move: explicitly copy `LICENSE` into package.
 - Hook behavior change: keep Husky at root and verify staged-file linting still runs.
 - Path regressions after move: rely on per-package cwd scripts and run full baseline suite before/after.

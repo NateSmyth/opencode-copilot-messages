@@ -1,7 +1,7 @@
 {
-	"name": "opencode-copilot-messages",
-	"version": "0.1.0",
-	"description": "OpenCode plugin for Copilot Claude via Anthropic Messages API (/v1/messages)",
+	"name": "opencode-copilot-responses",
+	"version": "0.0.0",
+	"description": "OpenCode plugin for Copilot OpenAI via Responses API (/v1/responses)",
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -29,7 +29,6 @@
 		"prepublishOnly": "bun run build"
 	},
 	"dependencies": {
-		"@ai-sdk/anthropic": "2.0.58",
 		"@opencode-ai/plugin": "^1.1.48"
 	},
 	"devDependencies": {

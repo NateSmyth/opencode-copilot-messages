@@ -4,7 +4,7 @@
 
 ### [Phase: BASELINE]
 
-- [x] [T00] Verify baseline is clean in worktree (`bun test`, `bun run typecheck`).
+- [x] [T00] Verify baseline is clean in worktree (`bun test`, `bun run check`).
 
 ### [Phase: RED]
 
@@ -115,6 +115,6 @@ Given a valid Copilot session token, when we call `fetchModels()`, then it shoul
 ## Verification
 
 - [ ] All tests pass in the worktree (`bun test`)
-- [ ] No type errors (`bun run typecheck`)
+- [ ] No type errors (`bun run check`)
 - [ ] Manual (optional, if you have a real session token):
   - `curl -sS https://api.copilot.com/models -H "Authorization: Bearer $TOKEN" -H "User-Agent: GitHubCopilotChat/0.36.2" ...` and confirm `supported_endpoints` includes `"/v1/messages"` for the returned Claude models.

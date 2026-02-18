@@ -4,7 +4,7 @@
 
 ### Baseline
 
-- [x] [T01] Verify baseline green in worktree (`bun test`, `bun run typecheck`, `bun run lint`)
+- [x] [T01] Verify baseline green in worktree (`bun test`, `bun run check`, `bun run lint`)
 
 ### Phase: RED
 
@@ -187,5 +187,5 @@ Acceptance criteria (matches tests):
 ## Verification
 
 - [ ] All tests pass (`bun test`)
-- [ ] No type errors (`bun run typecheck`)
+- [ ] No type errors (`bun run check`)
 - [ ] Lint clean (`bun run lint`)

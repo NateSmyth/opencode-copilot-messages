@@ -170,7 +170,7 @@ Add support for Claude Opus 4.6's adaptive thinking and effort parameter while s
 ## Verification Criteria
 
 1. **Unit tests pass**: `bun test` all green
-2. **Type check**: `bun run typecheck` passes
+2. **Type check**: `bun run check` passes
 3. **Lint**: `bun run lint` passes
 4. **Manual verification**: (if Opus 4.6 available on Copilot)
    - Request shows `thinking: {type: "adaptive"}` and `output_config: {effort}` in body

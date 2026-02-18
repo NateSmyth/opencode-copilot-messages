@@ -78,7 +78,7 @@ Given user config that is valid for the current Anthropic API / ai-sdk v3 (notab
 - Worktree: `/home/nate/Projects/AgentTools/opencode/opencode-copilot-messages/.worktrees/adaptive-stash-refactor`
 - Run:
   - `bun test`
-  - `bun run typecheck`
+  - `bun run check`
   - `bun run lint`
 
 ### [T01] Update `src/plugin.test.ts` to cover forward-compat detect/stash/swap
@@ -155,7 +155,7 @@ Implementation notes:
 
 Verification for T04:
 
-- Typecheck (`bun run typecheck`) should still pass after adding the module.
+- check (`bun run check`) should still pass after adding the module.
 
 ### [T05] Refactor `src/plugin.ts` to detect/stash/swap and simplify effort remap
 
@@ -224,5 +224,5 @@ Verification for T06:
 Verification for T07:
 
 - `bun test`
-- `bun run typecheck`
+- `bun run check`
 - `bun run lint`
