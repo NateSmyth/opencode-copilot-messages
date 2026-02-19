@@ -28,7 +28,7 @@ type HooksShape = {
 
 // Shared mock server and fetch override for end-to-end tests
 const captured = {
-	device: null as Record<string, string> | null,
+	device: { client_id: "", scope: "" },
 	responses: [] as Array<{ headers: Record<string, string | null>; body: unknown }>,
 }
 const state = {
@@ -246,15 +246,15 @@ describe("auth hook contract", () => {
 describe("auth authorize end-to-end", () => {
 	it("performs device flow with correct client ID and scope, polls for token, checks entitlement", async () => {
 		state.polls = 0
-		captured.device = null
+		captured.device = { client_id: "", scope: "" }
 		const hooks = (await CopilotResponsesPlugin(stubInput())) as unknown as HooksShape
 		const auth = await hooks.auth.methods[0].authorize()
 		expect(auth.url).toContain("github.com/login/device")
 		expect(auth.instructions).toContain("ABCD-1234")
 
 		const stored = await auth.callback()
-		expect(captured.device!.client_id).toBe("Ov23ctDVkRmgkPke0Mmm")
-		expect(captured.device!.scope).toBe("read:user")
+		expect(captured.device.client_id).toBe("Ov23ctDVkRmgkPke0Mmm")
+		expect(captured.device.scope).toBe("read:user")
 		expect(stored.type).toBe("success")
 		expect(stored.refresh).toBe("gho_test")
 		expect(stored.access).toBe("gho_test")

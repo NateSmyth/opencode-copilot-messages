@@ -1,14 +1,22 @@
 import type { Hooks, Plugin } from "@opencode-ai/plugin"
 import type { Model } from "@opencode-ai/sdk"
 import { authorizeDeviceCode, fetchEntitlement, pollForToken } from "./auth"
-import type { StoredAuth } from "./auth/types"
 import { fetchModels } from "./models/registry"
 import { copilotResponsesFetch } from "./provider/fetch"
 
 type ModelWithVariants = Model & { variants?: Record<string, unknown> }
 
+// baseUrl may be absent on reload if persisted before this field existed
+type LooseAuth = {
+	type: string
+	refresh: string
+	access: string
+	expires: number
+	baseUrl?: string
+}
+
 export const CopilotResponsesPlugin: Plugin = async (input) => {
-	const hooks = {
+	return {
 		config: async (config: { provider?: Record<string, unknown> }) => {
 			if (!config.provider) config.provider = {}
 			if (!config.provider["copilot-responses"]) {
@@ -65,7 +73,7 @@ export const CopilotResponsesPlugin: Plugin = async (input) => {
 				},
 			],
 			loader: async (getAuth, provider) => {
-				const stored = (await getAuth()) as (StoredAuth & { baseUrl?: string }) | null
+				const stored = (await getAuth()) as LooseAuth | null
 				if (!stored || stored.type !== "oauth") return {}
 				const token =
 					typeof stored.access === "string" && stored.access.startsWith("gho_")
@@ -99,12 +107,10 @@ export const CopilotResponsesPlugin: Plugin = async (input) => {
 			},
 		},
 	} as Hooks
-
-	return hooks
 }
 
 async function resolveBaseUrl(
-	stored: StoredAuth & { baseUrl?: string },
+	stored: LooseAuth,
 	token: string,
 	input: Parameters<Plugin>[0]
 ): Promise<string> {

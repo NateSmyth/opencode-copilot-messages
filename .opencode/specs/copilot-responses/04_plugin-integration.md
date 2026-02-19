@@ -128,12 +128,12 @@ This is done:
 
 #### Phase: REFACTOR
 
-- [ ] [T10] Refactor `src/plugin.ts` for clarity/robustness (helper(s) for model merge + baseUrl resolution; avoid `let`/`else`; keep behavior stable)
-- [ ] [T11] Tighten types (avoid `any`, minimize casts) and keep tests focused on observable behavior (no provider/header implementation duplication)
+- [x] [T10] Refactor `src/plugin.ts` for clarity/robustness (helper(s) for model merge + baseUrl resolution; avoid `let`/`else`; keep behavior stable)
+- [x] [T11] Tighten types (avoid `any`, minimize casts) and keep tests focused on observable behavior (no provider/header implementation duplication)
 
 ---
 
-- [ ] **COMMIT**: `refactor: tighten copilot responses plugin integration`
+- [x] **COMMIT**: `refactor: tighten copilot responses plugin integration`
 
 ### Details
 
