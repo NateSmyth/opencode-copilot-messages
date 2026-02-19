@@ -1,5 +1,6 @@
 import { buildHeaders } from "./headers"
 import { determineInitiator, hasImageContent } from "./initiator"
+import { normalizeReasoningIds } from "./normalize"
 
 export interface FetchContext {
 	token: string
@@ -25,7 +26,17 @@ export async function copilotResponsesFetch(
 	for (const [key, value] of Object.entries(copilot)) {
 		headers.set(key, value)
 	}
-	return fetch(input, { ...init, headers, body: stripIds(init?.body) })
+	const response = await fetch(input, {
+		...init,
+		headers,
+		body: stripIds(init?.body),
+	})
+	if (!response.body || !isSSE(response)) return response
+	return new Response(normalizeReasoningIds(response.body), {
+		status: response.status,
+		statusText: response.statusText,
+		headers: response.headers,
+	})
 }
 
 const decoder = new TextDecoder()
@@ -65,6 +76,10 @@ function parse(text: string): ParsedBody {
 	} catch {
 		return { input: [] }
 	}
+}
+
+function isSSE(response: Response): boolean {
+	return (response.headers.get("content-type") ?? "").includes("text/event-stream")
 }
 
 // Strip id fields from input items before sending to the Copilot proxy.

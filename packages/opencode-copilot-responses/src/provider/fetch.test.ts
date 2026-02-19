@@ -482,6 +482,48 @@ describe("copilotResponsesFetch", () => {
 		expect((input[1] as Record<string, unknown>).output).toBe("done")
 	})
 
+	it("normalizes reasoning ids in SSE response stream", async () => {
+		const encoder = new TextEncoder()
+		const events = [
+			`event: response.output_item.added\ndata: ${JSON.stringify({
+				type: "response.output_item.added",
+				output_index: 0,
+				item: { type: "reasoning", id: "canonical-abc" },
+			})}\n\n`,
+			`event: response.reasoning_summary_text.delta\ndata: ${JSON.stringify({
+				type: "response.reasoning_summary_text.delta",
+				item_id: "rotated-xyz",
+				output_index: 0,
+				summary_index: 0,
+				delta: "thought",
+			})}\n\n`,
+		].join("")
+
+		await withServer(
+			() =>
+				new Response(
+					new ReadableStream({
+						start(c) {
+							c.enqueue(encoder.encode(events))
+							c.close()
+						},
+					}),
+					{ headers: { "content-type": "text/event-stream" } }
+				),
+			async (url) => {
+				const res = await copilotResponsesFetch(url, post({ input: [] }), {
+					token: "t",
+				})
+				const text = await res.text()
+				const dataLines = text
+					.split("\n")
+					.filter((l) => l.startsWith("data: "))
+					.map((l) => JSON.parse(l.slice(6)))
+				expect(dataLines[1].item_id).toBe("canonical-abc")
+			}
+		)
+	})
+
 	it("does not throw on malformed body and defaults initiator to agent", async () => {
 		await withServer(
 			(req) => {
