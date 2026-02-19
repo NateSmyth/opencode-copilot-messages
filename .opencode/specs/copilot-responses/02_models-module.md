@@ -76,17 +76,17 @@ This is done:
 
 ### Checklist
 
-- [ ] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
+- [x] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
 
 #### Phase: RED
 
-- [ ] [T01] Add `src/models/registry.test.ts` that drives `fetchModels()` through a real `Bun.serve()` server and asserts request + mapping end-to-end
-- [ ] [T02] In the same test, return a mixed model list and assert filtering keeps only models whose `supported_endpoints` includes `"/responses"`
-- [ ] [T03] Add a parsing-focused test that returns each supported envelope (`CopilotModel[]`, `{ data: [...] }`, `{ models: [...] }`) and asserts all are accepted
-- [ ] [T04] Add focused mapping assertions for capabilities:
+- [x] [T01] Add `src/models/registry.test.ts` that drives `fetchModels()` through a real `Bun.serve()` server and asserts request + mapping end-to-end
+- [x] [T02] In the same test, return a mixed model list and assert filtering keeps only models whose `supported_endpoints` includes `"/responses"`
+- [x] [T03] Add a parsing-focused test that returns each supported envelope (`CopilotModel[]`, `{ data: [...] }`, `{ models: [...] }`) and asserts all are accepted
+- [x] [T04] Add focused mapping assertions for capabilities:
   - reasoning: `capabilities.supports.max_thinking_budget` present → `Model.capabilities.reasoning === true`
   - vision: model indicates vision support → `Model.capabilities.attachment === true` and `Model.capabilities.input.image === true`
-- [ ] [T05] Add a “full-shape” mapping assertion using a real Copilot model payload fixture inlined in the test file (gpt-5.3-codex) and compare against an expected full `Model` object (provider/api/cost/limit/status/capabilities/options)
+- [x] [T05] Add a "full-shape" mapping assertion using a real Copilot model payload fixture inlined in the test file (gpt-5.3-codex) and compare against an expected full `Model` object (provider/api/cost/limit/status/capabilities/options)
 
 ---
 
