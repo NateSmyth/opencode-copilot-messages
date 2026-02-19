@@ -127,12 +127,12 @@ This is done:
 
 ---
 
-- [ ] **COMMIT**: `feat: add copilot responses provider fetch interceptor`
+- [x] **COMMIT**: `feat: add copilot responses provider fetch interceptor`
 
 #### Phase: REFACTOR
 
-- [ ] [T10] Tighten parsing + edge cases (missing/odd shapes) without changing test intent (no test edits)
-- [ ] [T11] Remove duplication in tests and ensure style-guide compliance (no `let`, avoid `else`, avoid unnecessary destructuring)
+- [x] [T10] Tighten parsing + edge cases (missing/odd shapes) without changing test intent (no test edits)
+- [x] [T11] Remove duplication in tests and ensure style-guide compliance (no `let`, avoid `else`, avoid unnecessary destructuring)
 
 ---
 

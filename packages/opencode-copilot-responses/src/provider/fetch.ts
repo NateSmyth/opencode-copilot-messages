@@ -8,7 +8,7 @@ export interface FetchContext {
 export async function copilotResponsesFetch(
 	input: string | URL | Request,
 	init: RequestInit | undefined,
-	context: FetchContext,
+	context: FetchContext
 ): Promise<Response> {
 	const headers = merge(input, init)
 	headers.delete("x-api-key")

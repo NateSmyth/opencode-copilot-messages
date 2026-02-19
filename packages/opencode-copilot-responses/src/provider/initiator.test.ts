@@ -3,9 +3,7 @@ import { determineInitiator, hasImageContent } from "./initiator"
 
 describe("determineInitiator", () => {
 	it("returns user when last input item is a user message with text", () => {
-		const input = [
-			{ role: "user", content: [{ type: "input_text", text: "hi" }] },
-		]
+		const input = [{ role: "user", content: [{ type: "input_text", text: "hi" }] }]
 		expect(determineInitiator(input)).toBe("user")
 	})
 
@@ -47,9 +45,7 @@ describe("hasImageContent", () => {
 	})
 
 	it("returns false when no input items contain images", () => {
-		const input = [
-			{ role: "user", content: [{ type: "input_text", text: "hello" }] },
-		]
+		const input = [{ role: "user", content: [{ type: "input_text", text: "hello" }] }]
 		expect(hasImageContent(input)).toBe(false)
 	})
 
@@ -58,9 +54,7 @@ describe("hasImageContent", () => {
 	})
 
 	it("returns false when input items have no content array", () => {
-		const input = [
-			{ type: "function_call_output", call_id: "c1", output: "done" },
-		]
+		const input = [{ type: "function_call_output", call_id: "c1", output: "done" }]
 		expect(hasImageContent(input)).toBe(false)
 	})
 })
