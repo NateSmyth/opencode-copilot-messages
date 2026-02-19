@@ -117,13 +117,13 @@ This is done:
 
 ---
 
-- [ ] **COMMIT**: `test: provider fetch header injection and request analysis`
+- [x] **COMMIT**: `test: provider fetch header injection and request analysis`
 
 #### Phase: GREEN
 
-- [ ] [T07] Implement `src/provider/initiator.ts` (`determineInitiator`, `hasImageContent`) for Responses API request bodies
-- [ ] [T08] Implement `src/provider/headers.ts` (`buildHeaders`) for the Copilot CLI header set
-- [ ] [T09] Implement `src/provider/fetch.ts` (`copilotResponsesFetch`) to merge headers, strip `x-api-key`, derive initiator/vision, and inject headers
+- [x] [T07] Implement `src/provider/initiator.ts` (`determineInitiator`, `hasImageContent`) for Responses API request bodies
+- [x] [T08] Implement `src/provider/headers.ts` (`buildHeaders`) for the Copilot CLI header set
+- [x] [T09] Implement `src/provider/fetch.ts` (`copilotResponsesFetch`) to merge headers, strip `x-api-key`, derive initiator/vision, and inject headers
 
 ---
 
