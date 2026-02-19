@@ -93,13 +93,13 @@ This is done:
 
 #### Phase: GREEN
 
-- [ ] [T05] Implement `src/auth/oauth.ts` (`authorizeDeviceCode`, `pollForToken`) with injectable deps and form-encoded POST bodies
-- [ ] [T06] Implement `src/auth/entitlement.ts` (`fetchEntitlement`) with injectable deps and robust parsing
-- [ ] [T07] Implement `src/auth/types.ts` (`StoredAuth`) and export auth surface from `src/auth/index.ts`
+- [x] [T05] Implement `src/auth/oauth.ts` (`authorizeDeviceCode`, `pollForToken`) with injectable deps and form-encoded POST bodies
+- [x] [T06] Implement `src/auth/entitlement.ts` (`fetchEntitlement`) with injectable deps and robust parsing
+- [x] [T07] Implement `src/auth/types.ts` (`StoredAuth`) and export auth surface from `src/auth/index.ts`
 
 ---
 
-- [ ] **COMMIT**: `feat: add auth module oauth and entitlement`
+- [x] **COMMIT**: `feat: add auth module oauth and entitlement`
 
 #### Phase: REFACTOR
 
