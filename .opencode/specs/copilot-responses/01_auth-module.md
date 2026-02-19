@@ -78,18 +78,18 @@ This is done:
 
 ### Checklist
 
-- [ ] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
+- [x] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
 
 #### Phase: RED
 
-- [ ] [T01] Add RED tests for `authorizeDeviceCode()` request + response shape
-- [ ] [T02] Add RED tests for `pollForToken()` retry + error handling (`authorization_pending`, `slow_down`, `access_denied`, `expired_token`)
-- [ ] [T03] Add RED tests for `fetchEntitlement()` base URL extraction + non-OK error
-- [ ] [T04] Add RED tests for `StoredAuth` shape including `baseUrl`
+- [x] [T01] Add RED tests for `authorizeDeviceCode()` request + response shape
+- [x] [T02] Add RED tests for `pollForToken()` retry + error handling (`authorization_pending`, `slow_down`, `access_denied`, `expired_token`)
+- [x] [T03] Add RED tests for `fetchEntitlement()` base URL extraction + non-OK error
+- [x] [T04] Add RED tests for `StoredAuth` shape including `baseUrl`
 
 ---
 
-- [ ] **COMMIT**: `test: auth oauth device flow and entitlement`
+- [x] **COMMIT**: `test: auth oauth device flow and entitlement`
 
 #### Phase: GREEN
 
