@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { RESPONSES_AGENT } from "../auth/headers"
 import { copilotResponsesFetch } from "./fetch"
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -28,6 +29,7 @@ describe("copilotResponsesFetch", () => {
 		await withServer(
 			(req) => {
 				expect(req.headers.get("x-api-key")).toBe(null)
+				expect(req.headers.get("user-agent")).toBe(RESPONSES_AGENT)
 				expect(req.headers.get("authorization")).toBe("Bearer gho_test")
 				expect(req.headers.get("copilot-integration-id")).toBe("copilot-developer-cli")
 				expect(req.headers.get("x-github-api-version")).toBe("2025-05-01")
@@ -41,7 +43,9 @@ describe("copilotResponsesFetch", () => {
 				const res = await copilotResponsesFetch(
 					url,
 					post(
-						{ input: [{ role: "user", content: [{ type: "input_text", text: "hi" }] }] },
+						{
+							input: [{ role: "user", content: [{ type: "input_text", text: "hi" }] }],
+						},
 						{ "x-api-key": "sk-test" }
 					),
 					{ token: "gho_test" }
@@ -91,7 +95,14 @@ describe("copilotResponsesFetch", () => {
 			async (url) => {
 				const res = await copilotResponsesFetch(
 					url,
-					post({ input: [{ role: "user", content: [{ type: "input_text", text: "hello" }] }] }),
+					post({
+						input: [
+							{
+								role: "user",
+								content: [{ type: "input_text", text: "hello" }],
+							},
+						],
+					}),
 					{ token: "t" }
 				)
 				expect(res.ok).toBe(true)
@@ -131,7 +142,14 @@ describe("copilotResponsesFetch", () => {
 				const res = await copilotResponsesFetch(
 					url,
 					post(
-						{ input: [{ role: "user", content: [{ type: "input_text", text: "hello" }] }] },
+						{
+							input: [
+								{
+									role: "user",
+									content: [{ type: "input_text", text: "hello" }],
+								},
+							],
+						},
 						{ "x-initiator": "agent" }
 					),
 					{ token: "t" }
@@ -155,7 +173,10 @@ describe("copilotResponsesFetch", () => {
 							{
 								role: "user",
 								content: [
-									{ type: "input_image", image_url: { url: "data:image/png;base64,AA==" } },
+									{
+										type: "input_image",
+										image_url: { url: "data:image/png;base64,AA==" },
+									},
 								],
 							},
 						],
@@ -176,7 +197,14 @@ describe("copilotResponsesFetch", () => {
 			async (url) => {
 				const res = await copilotResponsesFetch(
 					url,
-					post({ input: [{ role: "user", content: [{ type: "input_text", text: "hello" }] }] }),
+					post({
+						input: [
+							{
+								role: "user",
+								content: [{ type: "input_text", text: "hello" }],
+							},
+						],
+					}),
 					{ token: "t" }
 				)
 				expect(res.ok).toBe(true)
@@ -195,7 +223,12 @@ describe("copilotResponsesFetch", () => {
 					url,
 					post({
 						instructions: "You are a title generator. Provide a short title.",
-						input: [{ role: "user", content: [{ type: "input_text", text: "hello" }] }],
+						input: [
+							{
+								role: "user",
+								content: [{ type: "input_text", text: "hello" }],
+							},
+						],
 					}),
 					{ token: "t" }
 				)
@@ -215,9 +248,17 @@ describe("copilotResponsesFetch", () => {
 					url,
 					post({
 						instructions: [
-							{ type: "text", text: "You are a title generator. Provide a short title." },
+							{
+								type: "text",
+								text: "You are a title generator. Provide a short title.",
+							},
 						],
-						input: [{ role: "user", content: [{ type: "input_text", text: "hello" }] }],
+						input: [
+							{
+								role: "user",
+								content: [{ type: "input_text", text: "hello" }],
+							},
+						],
 					}),
 					{ token: "t" }
 				)
@@ -237,7 +278,12 @@ describe("copilotResponsesFetch", () => {
 					url,
 					post({
 						system: "You are a title generator. Provide a short title.",
-						input: [{ role: "user", content: [{ type: "input_text", text: "hello" }] }],
+						input: [
+							{
+								role: "user",
+								content: [{ type: "input_text", text: "hello" }],
+							},
+						],
 					}),
 					{ token: "t" }
 				)
@@ -281,11 +327,32 @@ describe("copilotResponsesFetch", () => {
 					url,
 					post({
 						input: [
-							{ role: "user", content: [{ type: "input_text", text: "search for X" }] },
-							{ type: "function_call", id: "fc1", name: "search", arguments: "{}" },
-							{ type: "function_call_output", call_id: "fc1", output: "result A" },
-							{ type: "function_call", id: "fc2", name: "summarize", arguments: "{}" },
-							{ type: "function_call_output", call_id: "fc2", output: "summary B" },
+							{
+								role: "user",
+								content: [{ type: "input_text", text: "search for X" }],
+							},
+							{
+								type: "function_call",
+								id: "fc1",
+								name: "search",
+								arguments: "{}",
+							},
+							{
+								type: "function_call_output",
+								call_id: "fc1",
+								output: "result A",
+							},
+							{
+								type: "function_call",
+								id: "fc2",
+								name: "summarize",
+								arguments: "{}",
+							},
+							{
+								type: "function_call_output",
+								call_id: "fc2",
+								output: "summary B",
+							},
 						],
 					}),
 					{ token: "t" }
@@ -303,7 +370,9 @@ describe("copilotResponsesFetch", () => {
 				return new Response("ok")
 			},
 			async (url) => {
-				const res = await copilotResponsesFetch(url, post("not-json"), { token: "t" })
+				const res = await copilotResponsesFetch(url, post("not-json"), {
+					token: "t",
+				})
 				expect(res.ok).toBe(true)
 			}
 		)

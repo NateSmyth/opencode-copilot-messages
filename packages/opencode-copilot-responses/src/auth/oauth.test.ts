@@ -68,6 +68,7 @@ describe("authorizeDeviceCode", () => {
 
 				const type = req.headers.get("content-type") ?? ""
 				expect(type).toContain("application/x-www-form-urlencoded")
+				expect(req.headers.get("user-agent")).toBe("undici")
 				expect(req.headers.get("accept")).toContain("application/json")
 
 				const params = new URLSearchParams(await req.text())
@@ -126,6 +127,7 @@ describe("pollForToken", () => {
 			async fetch(req) {
 				expect(new URL(req.url).pathname).toBe("/login/oauth/access_token")
 
+				expect(req.headers.get("user-agent")).toBe("undici")
 				const params = new URLSearchParams(await req.text())
 				expect(params.get("grant_type")).toBe("urn:ietf:params:oauth:grant-type:device_code")
 				expect(params.get("client_id")).toBe("Ov23ctDVkRmgkPke0Mmm")

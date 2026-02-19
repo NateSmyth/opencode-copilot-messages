@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import type { Model } from "@opencode-ai/sdk"
+import { MODELS_AGENT } from "../auth/headers"
 
 type FetchInput = {
 	token: string
@@ -48,7 +49,10 @@ async function load() {
 	if (typeof registry.fetchModels !== "function") throw new Error("fetchModels not implemented")
 	if (typeof registry.mapToOpencodeModel !== "function")
 		throw new Error("mapToOpencodeModel not implemented")
-	return { fetchModels: registry.fetchModels, map: registry.mapToOpencodeModel }
+	return {
+		fetchModels: registry.fetchModels,
+		map: registry.mapToOpencodeModel,
+	}
 }
 
 const BASE_URL = "http://test.invalid"
@@ -127,7 +131,7 @@ describe("copilot responses model registry", () => {
 
 				const auth = req.headers.get("authorization") ?? ""
 				expect(auth.startsWith("Bearer ")).toBe(true)
-				expect(req.headers.get("user-agent")?.length).toBeGreaterThan(0)
+				expect(req.headers.get("user-agent")).toBe(MODELS_AGENT)
 				expect(req.headers.get("copilot-integration-id")).toBe("copilot-developer-cli")
 				expect(req.headers.get("x-github-api-version")).toBe("2025-05-01")
 				expect(req.headers.get("x-interaction-type")).toBe("model-access")

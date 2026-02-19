@@ -27,6 +27,7 @@ describe("fetchEntitlement", () => {
 				expect(new URL(req.url).pathname).toBe("/copilot_internal/user")
 				expect(req.method).toBe("GET")
 				expect(req.headers.get("authorization")).toBe("Bearer gho_abc123")
+				expect(req.headers.get("user-agent")).toBe("undici")
 				expect(req.headers.get("accept")).toContain("application/json")
 				return Response.json({
 					login: "octocat",
