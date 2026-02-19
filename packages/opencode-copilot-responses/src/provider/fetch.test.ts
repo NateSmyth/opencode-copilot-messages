@@ -362,6 +362,126 @@ describe("copilotResponsesFetch", () => {
 		)
 	})
 
+	it("strips id from reasoning items in input", async () => {
+		let received: unknown
+		await withServer(
+			async (req) => {
+				received = await req.json()
+				return new Response("ok")
+			},
+			async (url) => {
+				await copilotResponsesFetch(
+					url,
+					post({
+						input: [
+							{ role: "user", content: [{ type: "input_text", text: "hi" }] },
+							{
+								type: "reasoning",
+								id: "ZSBMzZFubPvHK4BK3ZoxLmQf1Gs==",
+								summary: [{ type: "summary_text", text: "thinking" }],
+								encrypted_content: "gAAAAA==",
+							},
+						],
+					}),
+					{ token: "t" }
+				)
+			}
+		)
+		const input = (received as Record<string, unknown>).input as unknown[]
+		const reasoning = input[1] as Record<string, unknown>
+		expect("id" in reasoning).toBe(false)
+		expect(reasoning.type).toBe("reasoning")
+		expect(reasoning.encrypted_content).toBe("gAAAAA==")
+	})
+
+	it("strips id from function_call items in input", async () => {
+		let received: unknown
+		await withServer(
+			async (req) => {
+				received = await req.json()
+				return new Response("ok")
+			},
+			async (url) => {
+				await copilotResponsesFetch(
+					url,
+					post({
+						input: [
+							{
+								type: "function_call",
+								id: "fc-encrypted-blob==",
+								call_id: "call_123",
+								name: "bash",
+								arguments: "{}",
+							},
+						],
+					}),
+					{ token: "t" }
+				)
+			}
+		)
+		const input = (received as Record<string, unknown>).input as unknown[]
+		const call = input[0] as Record<string, unknown>
+		expect("id" in call).toBe(false)
+		expect(call.call_id).toBe("call_123")
+		expect(call.name).toBe("bash")
+	})
+
+	it("strips id from item_reference items in input", async () => {
+		let received: unknown
+		await withServer(
+			async (req) => {
+				received = await req.json()
+				return new Response("ok")
+			},
+			async (url) => {
+				await copilotResponsesFetch(
+					url,
+					post({
+						input: [{ type: "item_reference", id: "stale-encrypted-id==" }],
+					}),
+					{ token: "t" }
+				)
+			}
+		)
+		const input = (received as Record<string, unknown>).input as unknown[]
+		const ref = input[0] as Record<string, unknown>
+		expect("id" in ref).toBe(false)
+		expect(ref.type).toBe("item_reference")
+	})
+
+	it("preserves non-id fields on all input items", async () => {
+		let received: unknown
+		await withServer(
+			async (req) => {
+				received = await req.json()
+				return new Response("ok")
+			},
+			async (url) => {
+				await copilotResponsesFetch(
+					url,
+					post({
+						input: [
+							{
+								role: "user",
+								content: [{ type: "input_text", text: "hello" }],
+							},
+							{
+								type: "function_call_output",
+								call_id: "c1",
+								output: "done",
+							},
+						],
+					}),
+					{ token: "t" }
+				)
+			}
+		)
+		const input = (received as Record<string, unknown>).input as unknown[]
+		expect((input[0] as Record<string, unknown>).role).toBe("user")
+		expect((input[1] as Record<string, unknown>).call_id).toBe("c1")
+		expect((input[1] as Record<string, unknown>).output).toBe("done")
+	})
+
 	it("does not throw on malformed body and defaults initiator to agent", async () => {
 		await withServer(
 			(req) => {

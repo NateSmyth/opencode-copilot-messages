@@ -25,7 +25,7 @@ export async function copilotResponsesFetch(
 	for (const [key, value] of Object.entries(copilot)) {
 		headers.set(key, value)
 	}
-	return fetch(input, { ...init, headers })
+	return fetch(input, { ...init, headers, body: stripIds(init?.body) })
 }
 
 const decoder = new TextDecoder()
@@ -64,6 +64,23 @@ function parse(text: string): ParsedBody {
 		}
 	} catch {
 		return { input: [] }
+	}
+}
+
+// Strip id fields from input items before sending to the Copilot proxy.
+// The proxy re-encrypts item IDs per-response; stale IDs from previous turns
+// cause "reasoning part ... not found" errors on multi-turn conversations.
+function stripIds(body: RequestInit["body"] | null | undefined): string | null | undefined {
+	if (typeof body !== "string") return body as null | undefined
+	try {
+		const parsed = JSON.parse(body) as Record<string, unknown>
+		if (!Array.isArray(parsed.input)) return body
+		for (const item of parsed.input as Record<string, unknown>[]) {
+			delete item.id
+		}
+		return JSON.stringify(parsed)
+	} catch {
+		return body
 	}
 }
 
