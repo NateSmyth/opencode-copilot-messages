@@ -26,8 +26,8 @@ This is done:
     - then it returns an array of opencode `Model` objects
 
 - when `mapToOpencodeModel()` maps a Copilot model
-  - given a model with reasoning capabilities (`max_thinking_budget` defined)
-    - then the mapped model has `capabilities.reasoning: true`
+  - given any `/responses` model
+    - then the mapped model has `capabilities.reasoning: true` (all `/responses` models support `reasoning.effort` natively)
   - given a model with vision support
     - then the mapped model has `capabilities.attachment: true` and `input.image: true`
   - given any model
@@ -84,7 +84,7 @@ This is done:
 - [x] [T02] In the same test, return a mixed model list and assert filtering keeps only models whose `supported_endpoints` includes `"/responses"`
 - [x] [T03] Add a parsing-focused test that returns each supported envelope (`CopilotModel[]`, `{ data: [...] }`, `{ models: [...] }`) and asserts all are accepted
 - [x] [T04] Add focused mapping assertions for capabilities:
-  - reasoning: `capabilities.supports.max_thinking_budget` present → `Model.capabilities.reasoning === true`
+  - reasoning: `Model.capabilities.reasoning === true` for all `/responses` models (unconditional)
   - vision: model indicates vision support → `Model.capabilities.attachment === true` and `Model.capabilities.input.image === true`
 - [x] [T05] Add a "full-shape" mapping assertion using a real Copilot model payload fixture inlined in the test file (gpt-5.3-codex) and compare against an expected full `Model` object (provider/api/cost/limit/status/capabilities/options)
 
@@ -115,7 +115,7 @@ This is done:
   - `cost`: all zeros (including cache read/write)
   - `status`: `"beta"` when `preview: true`, else `"active"`
   - `capabilities`:
-    - `reasoning: true` when `supports.max_thinking_budget` is defined
+    - `reasoning: true` unconditionally (all `/responses` models support `reasoning.effort`)
     - `attachment + input.image: true` when the model supports vision
     - `toolcall: true` when `supports.tool_calls` is true
   - `limit.context/output` mapped from `capabilities.limits.*` with safe defaults
@@ -164,11 +164,9 @@ This is done:
   - Assert each case produces identical output from `fetchModels()`.
 
 - [T04] File: `packages/opencode-copilot-responses/src/models/registry.test.ts`
-  - Build two fixtures:
-    - reasoning-capable: `capabilities.supports.max_thinking_budget` set
-    - vision-capable: `capabilities.supports.vision: true` (and/or `capabilities.limits.vision` present)
+  - Build a vision-capable fixture: `capabilities.supports.vision: true` (and/or `capabilities.limits.vision` present)
   - Assert mapped `Model.capabilities` flags:
-    - reasoning → `true` only for the reasoning fixture
+    - reasoning → `true` for all fixtures (unconditional)
     - attachment + input.image → `true` only for the vision fixture
   - Also assert invariants that must always hold:
     - `providerID === "copilot-responses"`
@@ -197,9 +195,9 @@ This is done:
   - Mapping rules:
     - `const caps = model.capabilities ?? {}`; `const limits = caps.limits ?? {}`; `const supports = caps.supports ?? {}`
     - `const vision = !!supports.vision`
-    - `const reasoning = supports.max_thinking_budget !== undefined`
-    - `limit.context` defaults to `200000` when missing; `limit.output` defaults to `16000` when missing
-    - `options`: do **not** set `adaptiveThinking`; include only fields we have source data for (e.g., thinking budgets) and that opencode can represent without implying OpenAI-specific behavior
+    - `const reasoning = true` (all `/responses` models support `reasoning.effort`; `max_thinking_budget` is Anthropic-specific and not relevant here/not present for OpenAI models)
+    - `limit.context` defaults to `200000` when missing; `limit.output` defaults to `64000` when missing
+    - `options`: do **not** set `adaptiveThinking`; this is Anthropic-only
 
 - [T11-T12] Keep refactors behavior-preserving:
   - No edits to RED tests after starting GREEN.
