@@ -104,8 +104,140 @@ This is done:
 
 ### Checklist
 
-[TBD — to be filled during planning phase]
+- [x] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
+
+#### Phase: RED
+
+- [x] [T01] Add RED tests for `copilotResponsesFetch()` stripping `x-api-key` and injecting required Copilot headers
+- [x] [T02] Add RED tests for `determineInitiator()` (user text → user, function_call_output → agent, empty → agent)
+- [x] [T03] Add RED tests for `hasImageContent()` (input_image → true, no images → false)
+- [x] [T04] Add RED tests for internal agent detection via `instructions`/`system` prefix forcing `x-initiator: agent`
+- [x] [T05] Add RED tests that caller-supplied `x-initiator` is preserved and non-conflicting headers are preserved
+- [x] [T06] Add RED test that malformed/unparseable bodies do not throw and default initiator to agent
+
+---
+
+- [x] **COMMIT**: `test: provider fetch header injection and request analysis`
+
+#### Phase: GREEN
+
+- [x] [T07] Implement `src/provider/initiator.ts` (`determineInitiator`, `hasImageContent`) for Responses API request bodies
+- [x] [T08] Implement `src/provider/headers.ts` (`buildHeaders`) for the Copilot CLI header set
+- [x] [T09] Implement `src/provider/fetch.ts` (`copilotResponsesFetch`) to merge headers, strip `x-api-key`, derive initiator/vision, and inject headers
+
+---
+
+- [x] **COMMIT**: `feat: add copilot responses provider fetch interceptor`
+
+#### Phase: REFACTOR
+
+- [x] [T10] Tighten parsing + edge cases (missing/odd shapes) without changing test intent (no test edits)
+- [x] [T11] Remove duplication in tests and ensure style-guide compliance (no `let`, avoid `else`, avoid unnecessary destructuring)
+
+---
+
+- [x] **COMMIT**: `refactor: tighten provider module and tests`
 
 ### Details
 
-[TBD — to be filled during planning phase]
+- [T00] Baseline must be green so new failures are attributable to new RED tests.
+
+- [T01] File: `packages/opencode-copilot-responses/src/provider/fetch.test.ts`
+  - Stand up a real `Bun.serve({ port: 0, fetch(req) { ... } })` server.
+  - Call `copilotResponsesFetch(url, init, { token: "gho_test" })` and assert the server receives:
+    - `x-api-key` is stripped (`req.headers.get("x-api-key") === null`).
+    - `authorization: Bearer gho_test`.
+    - `copilot-integration-id: copilot-developer-cli`.
+    - `x-github-api-version: 2025-05-01`.
+    - `x-interaction-type: conversation-agent` and `openai-intent: conversation-agent`.
+    - `x-interaction-id` is present and matches UUID format.
+    - `x-request-id` is present and matches UUID format.
+  - Also verify a random caller header (e.g. `x-keep: 1`) is preserved.
+  - For per-request UUIDs, either:
+    - assert they match a UUID regex, or
+    - send two requests and assert the values differ between requests.
+
+- [T02] File: `packages/opencode-copilot-responses/src/provider/initiator.test.ts`
+  - Test `determineInitiator(input)` directly (pure function, no mocks):
+    - last `input` item `{ role: "user", content: [{ type: "input_text", text: "hi" }] }` → `"user"`.
+    - last `input` item `{ type: "function_call_output", ... }` → `"agent"`.
+    - `[]` → `"agent"`.
+  - Add one edge-case assertion: missing/empty `content` on a user item → `"agent"`.
+
+- [T03] File: `packages/opencode-copilot-responses/src/provider/initiator.test.ts`
+  - Test `hasImageContent(input)` directly:
+    - any input item with `content` containing `{ type: "input_image" }` → `true`.
+    - no `input_image` in any item → `false`.
+
+- [T04] File: `packages/opencode-copilot-responses/src/provider/fetch.test.ts`
+  - Provide a request body fixture with internal-agent instructions (title generation):
+    - `instructions: "You are a title generator. ..."` forces `x-initiator: agent`.
+    - `instructions: [{ type: "text", text: "You are a title generator. ..." }]` also forces agent.
+  - Also accept `system` as a fallback field (some callers may use it); implement the check as `instructions ?? system`.
+
+- [T05] File: `packages/opencode-copilot-responses/src/provider/fetch.test.ts`
+  - Caller-supplied `x-initiator`:
+    - send request with header `x-initiator: agent` and a user-looking body; assert it remains `agent`.
+  - Preserve non-conflicting headers:
+    - send `content-type`, `x-keep`, etc.; assert they reach the server unchanged.
+  - Conflicts:
+    - show that required Copilot headers win when present in the original request (e.g., original `authorization` overwritten).
+
+- [T06] File: `packages/opencode-copilot-responses/src/provider/fetch.test.ts`
+  - Pass `body: "not-json"` with `content-type: application/json`.
+  - Assert the request still succeeds and `x-initiator` defaults to `agent`.
+
+- [T07] File: `packages/opencode-copilot-responses/src/provider/initiator.ts`
+  - Export:
+    - `determineInitiator(input: unknown): "user" | "agent"`
+    - `hasImageContent(input: unknown): boolean`
+  - Implementation rules (robust, schema-light):
+    - `determineInitiator`:
+      - if `input` is not an array or is empty → `agent`.
+      - if last item has `type: "function_call_output"` → `agent`.
+      - if last item has `role: "user"` and has a text part (string content or `content[]` with last/any `{ type: "input_text" }`) → `user`.
+      - otherwise → `agent`.
+    - `hasImageContent`:
+      - walk all array items; if any has `content[]` with `{ type: "input_image" }` → `true`; else `false`.
+
+- [T08] File: `packages/opencode-copilot-responses/src/provider/headers.ts`
+  - Export `buildHeaders(context)` returning a `Record<string, string>`.
+  - Context fields:
+    - `token: string`
+    - `initiator: "user" | "agent"`
+    - `hasImages?: boolean`
+  - Must set (minimum):
+    - `Authorization: Bearer gho_<token>`
+    - `Copilot-Integration-Id: copilot-developer-cli`
+    - `X-GitHub-Api-Version: 2025-05-01`
+    - `X-Interaction-Type: conversation-agent`
+    - `Openai-Intent: conversation-agent`
+    - `X-Interaction-Id: <uuid>`
+    - `x-request-id: <uuid>`
+    - `x-initiator: <initiator>`
+    - conditional: `Copilot-Vision-Request: true` only when `hasImages === true`
+
+- [T09] File: `packages/opencode-copilot-responses/src/provider/fetch.ts`
+  - Export `copilotResponsesFetch(input, init, context)` (messages package pattern):
+    - `context: { token: string }`
+    - merge headers from `input` (when `Request`) and `init.headers` (init wins).
+    - strip `x-api-key`.
+    - parse body for analysis only (never rewrite):
+      - handle `init.body` as string/ArrayBuffer/ArrayBufferView; otherwise skip analysis.
+      - on JSON parse failure, treat as empty input.
+    - determine initiator:
+      - if caller supplied valid `x-initiator`, keep it.
+      - else if internal agent detected from `instructions`/`system` prefix, use `agent`.
+      - else derive from `determineInitiator(body.input)`.
+    - derive vision from `hasImageContent(body.input)`.
+    - inject headers from `buildHeaders({ token, initiator, hasImages })` via `headers.set()` (required headers override conflicts).
+    - call through to global `fetch(input, { ...init, headers })`.
+
+- [T10] Keep test intent stable; only change implementation. Focus areas:
+  - allow `instructions` and `system` to be either a string or an array of blocks containing `{ type: "text", text: string }`.
+  - default behavior for unknown/malformed shapes remains: `x-initiator: agent`, no vision header.
+
+- [T11] Test hygiene:
+  - prefer small helpers for server setup and UUID assertions.
+  - don’t duplicate implementation traversal logic in tests; validate observable behavior (headers on the received request).
+  - keep each test asserting one behavioral rule from Acceptance Criteria.
