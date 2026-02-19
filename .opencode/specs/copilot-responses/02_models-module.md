@@ -90,17 +90,17 @@ This is done:
 
 ---
 
-- [ ] **COMMIT**: `test: cover copilot responses /models registry`
+- [x] **COMMIT**: `test: cover copilot responses /models registry`
 
 #### Phase: GREEN
 
-- [ ] [T06] Create `src/models/registry.ts` exporting:
+- [x] [T06] Create `src/models/registry.ts` exporting:
   - `export interface CopilotModel { ... }` (matching the `/models` response shape we use)
   - `export function mapToOpencodeModel(model: CopilotModel, baseUrl: string): Model`
   - `export async function fetchModels(input: { token: string; baseUrl: string; fetch?: typeof fetch }): Promise<Model[]>`
-- [ ] [T07] Implement envelope parsing (`parseModels`) to handle raw array, `{ data }`, and `{ models }` bodies without throwing on unexpected shapes
-- [ ] [T08] Implement endpoint filtering: keep only `supported_endpoints.includes("/responses")`
-- [ ] [T09] Implement `/models` request header set to match CLI pattern:
+- [x] [T07] Implement envelope parsing (`parseModels`) to handle raw array, `{ data }`, and `{ models }` bodies without throwing on unexpected shapes
+- [x] [T08] Implement endpoint filtering: keep only `supported_endpoints.includes("/responses")`
+- [x] [T09] Implement `/models` request header set to match CLI pattern:
   - `Authorization: Bearer <token>`
   - `User-Agent: <non-empty>`
   - `Copilot-Integration-Id: copilot-developer-cli`
@@ -108,7 +108,7 @@ This is done:
   - `X-Interaction-Type: model-access`
   - `Openai-Intent: model-access`
   - `x-request-id: <uuid>`
-- [ ] [T10] Implement mapping to opencode `Model` with required invariants:
+- [x] [T10] Implement mapping to opencode `Model` with required invariants:
   - `providerID: "copilot-responses"`
   - `api.npm: "@ai-sdk/openai"`
   - `api.url: baseUrl` (input)
