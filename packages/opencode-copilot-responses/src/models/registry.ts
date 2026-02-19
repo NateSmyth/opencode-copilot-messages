@@ -47,7 +47,7 @@ export function mapToOpencodeModel(model: CopilotModel, baseUrl: string): Model 
 	const limits = caps.limits ?? {}
 	const supports = caps.supports ?? {}
 	const vision = !!supports.vision
-	const reasoning = supports.max_thinking_budget !== undefined
+	const reasoning = true
 
 	return {
 		id: model.id,
@@ -88,7 +88,7 @@ export function mapToOpencodeModel(model: CopilotModel, baseUrl: string): Model 
 		},
 		limit: {
 			context: limits.max_context_window_tokens ?? 200000,
-			output: limits.max_output_tokens ?? 16000,
+			output: limits.max_output_tokens ?? 64000,
 		},
 		status: model.preview ? "beta" : "active",
 		options: {},

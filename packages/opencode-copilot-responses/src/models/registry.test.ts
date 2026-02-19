@@ -179,22 +179,8 @@ describe("copilot responses model registry", () => {
 		server.stop()
 	})
 
-	it("maps reasoning capability from max_thinking_budget", async () => {
-		const reasoning: CopilotModel = {
-			...minimal("gpt-reasoning", ["/responses"]),
-			capabilities: {
-				limits: { max_context_window_tokens: 128000, max_output_tokens: 16384 },
-				supports: {
-					max_thinking_budget: 32768,
-					min_thinking_budget: 1024,
-					streaming: true,
-					tool_calls: true,
-					vision: false,
-				},
-			},
-		}
-
-		const { url, stop } = serveModels([reasoning])
+	it("sets reasoning true for all /responses models", async () => {
+		const { url, stop } = serveModels([minimal("gpt-5-mini", ["/responses"])])
 		const { fetchModels } = await load()
 		const result = await fetchModels({ token: "tok", baseUrl: url })
 		stop()
@@ -275,7 +261,7 @@ describe("copilot responses model registry", () => {
 			},
 			capabilities: {
 				temperature: true,
-				reasoning: false,
+				reasoning: true,
 				attachment: true,
 				toolcall: true,
 				input: {
