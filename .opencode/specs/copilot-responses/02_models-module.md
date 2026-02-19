@@ -10,10 +10,6 @@ blocks: [04]
 
 # Models Module
 
-## Unresolved
-
-- [ ] [U1] The spec references `.opencode/reference/copilot-CLI-models-request.md` for a full real-world `/models` payload (used in Verification #8), but that file does not exist in this repo/worktree. Confirm the correct location or add the reference capture so tests can assert the full mapped shape for a real model (e.g., gpt-5.3-codex).
-
 ## Goal
 
 Implement model discovery from the Copilot API's `/models` endpoint. Fetch available models, filter for those supporting the `/responses` endpoint, and map them to opencode's `Model` type with correct capabilities, limits, and options. This module enables the plugin to dynamically register all Copilot models that work with the Responses API.
@@ -58,17 +54,17 @@ This is done:
 5. Verify all three response envelope formats are handled (array, `{data}`, `{models}`)
 6. Verify endpoint filtering is correct (only `/responses` models pass)
 7. Verify complete `Model` shape including all capability flags, cost, limits, status, and options
-8. Compare a mapped model against the expected shape using a full model from the reference material (e.g., gpt-5.3-codex from `.opencode/reference/copilot-CLI-models-request.md`)
+8. Compare a mapped model against the expected shape using a full real-world fixture inlined in tests (e.g., a gpt-5.3-codex `/models` payload)
 
 ## Considerations
 
-- **Endpoint filter value**: The filter value is `"/responses"` (no `/v1/` prefix). This is confirmed by the `/models` response in the reference material, which shows `supported_endpoints: ["/responses"]` for gpt-5.3-codex.
+- **Endpoint filter value**: The filter value is `"/responses"` (no `/v1/` prefix). This is confirmed by a real Copilot `/models` payload (use the inlined gpt-5.3-codex fixture in tests).
 
 - **API URL in model**: Each mapped model's `api.url` should be the base URL from auth (e.g., `https://api.individual.githubcopilot.com`), NOT a hardcoded value. This is passed as input to `fetchModels()`.
 
-- **Headers on /models request**: Match the CLI pattern. Required headers include `Authorization`, `Copilot-Integration-Id: copilot-developer-cli`, `X-GitHub-Api-Version: 2025-05-01`, `X-Interaction-Type: model-access`, `Openai-Intent: model-access`, `x-request-id: <uuid>`. Reference: `.opencode/reference/copilot-CLI-models-request.md` lines 9-26.
+- **Headers on /models request**: Match the Copilot CLI pattern. Required headers include `Authorization`, `Copilot-Integration-Id: copilot-developer-cli`, `X-GitHub-Api-Version: 2025-05-01`, `X-Interaction-Type: model-access`, `Openai-Intent: model-access`, `x-request-id: <uuid>`. Validate by asserting the request received by the test `Bun.serve()` server.
 
-- **CopilotModel interface**: Define an interface matching the model shape from the `/models` response. Key fields: `id`, `name`, `vendor`, `preview`, `capabilities.limits` (context window, output, prompt tokens, vision), `capabilities.supports` (streaming, tool_calls, vision, parallel_tool_calls, structured_outputs), `supported_endpoints`. Reference: `.opencode/reference/copilot-CLI-models-request.md` lines 47-273.
+- **CopilotModel interface**: Define an interface matching the model shape from the `/models` response. Key fields: `id`, `name`, `vendor`, `preview`, `capabilities.limits` (context window, output, prompt tokens, vision), `capabilities.supports` (streaming, tool_calls, vision, parallel_tool_calls, structured_outputs), `supported_endpoints`. Keep it minimal: only fields the mapper uses.
 
 - **No `adaptive_thinking` in Responses models**: Unlike the Anthropic models in the messages package, OpenAI Responses models use `reasoning.effort` natively via the SDK. The model metadata should NOT set `options.adaptiveThinking`. Instead, reasoning capability is indicated by `capabilities.reasoning: true` and opencode's variant system handles the rest through `providerOptions.openai.reasoningEffort`.
 
@@ -90,7 +86,7 @@ This is done:
 - [ ] [T04] Add focused mapping assertions for capabilities:
   - reasoning: `capabilities.supports.max_thinking_budget` present → `Model.capabilities.reasoning === true`
   - vision: model indicates vision support → `Model.capabilities.attachment === true` and `Model.capabilities.input.image === true`
-- [ ] [T05] Add a “full-shape” mapping assertion using a real Copilot model payload from the reference capture (gpt-5.3-codex) and compare against an expected full `Model` object (provider/api/cost/limit/status/capabilities/options)
+- [ ] [T05] Add a “full-shape” mapping assertion using a real Copilot model payload fixture inlined in the test file (gpt-5.3-codex) and compare against an expected full `Model` object (provider/api/cost/limit/status/capabilities/options)
 
 ---
 
@@ -182,7 +178,7 @@ This is done:
     - `status` flips based on `preview`
 
 - [T05] File: `packages/opencode-copilot-responses/src/models/registry.test.ts`
-  - Add a “real payload” fixture for gpt-5.3-codex copied from `.opencode/reference/copilot-CLI-models-request.md`.
+  - Add an inlined “real payload” fixture for gpt-5.3-codex (the `.opencode/reference/copilot-CLI-models-request.md` capture is intentionally untracked/unavailable in worktrees).
   - Assert `mapToOpencodeModel(gpt53, baseUrl)` equals a fully-specified expected `Model` object (not a partial match).
   - This test is what protects us from silently dropping fields or mis-mapping capability flags.
 
