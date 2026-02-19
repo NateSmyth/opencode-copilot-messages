@@ -132,7 +132,7 @@ This is done:
 
 ---
 
-- [ ] **COMMIT**: `refactor: tighten responses model registry`
+- [x] **COMMIT**: `refactor: tighten responses model registry`
 
 ### Details
 
