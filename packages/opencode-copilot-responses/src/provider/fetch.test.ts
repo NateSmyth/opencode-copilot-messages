@@ -246,6 +246,55 @@ describe("copilotResponsesFetch", () => {
 		)
 	})
 
+	it("overrides conflicting caller headers with required copilot headers", async () => {
+		await withServer(
+			(req) => {
+				expect(req.headers.get("authorization")).toBe("Bearer gho_real")
+				expect(req.headers.get("x-interaction-type")).toBe("conversation-agent")
+				return new Response("ok")
+			},
+			async (url) => {
+				const res = await copilotResponsesFetch(
+					url,
+					post(
+						{ input: [] },
+						{
+							authorization: "Bearer wrong",
+							"x-interaction-type": "should-be-overwritten",
+						}
+					),
+					{ token: "gho_real" }
+				)
+				expect(res.ok).toBe(true)
+			}
+		)
+	})
+
+	it("derives agent initiator during multi-step tool loop", async () => {
+		await withServer(
+			(req) => {
+				expect(req.headers.get("x-initiator")).toBe("agent")
+				return new Response("ok")
+			},
+			async (url) => {
+				const res = await copilotResponsesFetch(
+					url,
+					post({
+						input: [
+							{ role: "user", content: [{ type: "input_text", text: "search for X" }] },
+							{ type: "function_call", id: "fc1", name: "search", arguments: "{}" },
+							{ type: "function_call_output", call_id: "fc1", output: "result A" },
+							{ type: "function_call", id: "fc2", name: "summarize", arguments: "{}" },
+							{ type: "function_call_output", call_id: "fc2", output: "summary B" },
+						],
+					}),
+					{ token: "t" }
+				)
+				expect(res.ok).toBe(true)
+			}
+		)
+	})
+
 	it("does not throw on malformed body and defaults initiator to agent", async () => {
 		await withServer(
 			(req) => {
