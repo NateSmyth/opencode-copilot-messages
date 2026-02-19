@@ -93,23 +93,23 @@ This is done:
 
 ### Checklist
 
-- [ ] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
+- [x] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
 
 #### Phase: RED
 
-- [ ] [T01] Expand `src/plugin.test.ts` to cover `config` hook provider injection (inject when absent; no overwrite when present)
-- [ ] [T02] Add `auth` hook contract tests (provider id, single oauth method + label; `authorize()` returns `{ url, instructions, method: "auto", callback }`)
-- [ ] [T03] Add end-to-end auth flow test: `authorize()` → callback polls token → entitlement check → returns stored auth including `baseUrl`
-- [ ] [T04] Add `auth.loader()` integration tests:
+- [x] [T01] Expand `src/plugin.test.ts` to cover `config` hook provider injection (inject when absent; no overwrite when present)
+- [x] [T02] Add `auth` hook contract tests (provider id, single oauth method + label; `authorize()` returns `{ url, instructions, method: "auto", callback }`)
+- [x] [T03] Add end-to-end auth flow test: `authorize()` → callback polls token → entitlement check → returns stored auth including `baseUrl`
+- [x] [T04] Add `auth.loader()` integration tests:
   - returns `{}` when no stored auth / wrong type
   - when stored auth has `gho_` token + baseUrl, fetches `/models`, merges into provider models (user overrides win), returns `{ name: "openai", apiKey: "", baseURL, fetch }`
   - when stored auth is missing `baseUrl`, loader falls back to entitlement fetch and persists the discovered baseUrl
   - returned `fetch` strips `x-api-key` and injects Copilot headers (smoke test) and preserves caller `x-initiator`
-- [ ] [T05] Add `chat.headers` hook tests: sets `x-initiator: agent` for `copilot-responses` subagent sessions (parentID present); no-op otherwise
+- [x] [T05] Add `chat.headers` hook tests: sets `x-initiator: agent` for `copilot-responses` subagent sessions (parentID present); no-op otherwise
 
 ---
 
-- [ ] **COMMIT**: `test: cover copilot responses plugin hooks`
+- [x] **COMMIT**: `test: cover copilot responses plugin hooks`
 
 #### Phase: GREEN
 
