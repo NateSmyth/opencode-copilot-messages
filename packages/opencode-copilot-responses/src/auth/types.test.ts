@@ -7,10 +7,8 @@ async function load() {
 
 describe("StoredAuth", () => {
 	it("accepts the expected shape with baseUrl", async () => {
-		// Verify the module loads and the type is usable at runtime
 		await load()
 
-		// Structural validation: a conforming object must be assignable
 		const auth = {
 			type: "oauth" as const,
 			refresh: "gho_refresh",

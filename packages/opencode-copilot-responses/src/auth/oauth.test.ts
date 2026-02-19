@@ -14,34 +14,39 @@ type TokenResponse = {
 	scope: string
 }
 
-type AuthInput = {
-	fetch?: typeof fetch
-	url?: string
-	clientId?: string
-	scope?: string
-}
-
-type PollInput = {
-	deviceCode: string
-	interval: number
-	expiresAt: number
-	fetch?: typeof fetch
-	url?: string
-	clientId?: string
-	sleep?: (ms: number) => Promise<void>
-	now?: () => number
-}
-
 async function load() {
 	const mod = (await import("./oauth")) as {
-		authorizeDeviceCode?: (input?: AuthInput) => Promise<DeviceCodeResponse>
-		pollForToken?: (input: PollInput) => Promise<TokenResponse>
+		authorizeDeviceCode?: (input?: Record<string, unknown>) => Promise<DeviceCodeResponse>
+		pollForToken?: (input: Record<string, unknown>) => Promise<TokenResponse>
 		CLIENT_ID?: string
 	}
 	if (typeof mod.authorizeDeviceCode !== "function") throw new Error("authorizeDeviceCode missing")
 	if (typeof mod.pollForToken !== "function") throw new Error("pollForToken missing")
 	if (typeof mod.CLIENT_ID !== "string") throw new Error("CLIENT_ID missing")
 	return mod as Required<typeof mod>
+}
+
+const BASE_TIME = 1_700_000_000_000
+const NOW = () => BASE_TIME
+const EXPIRES = Math.floor(BASE_TIME / 1000) + 60
+
+function polling(server: { port?: number }, overrides?: Record<string, unknown>) {
+	const waits: number[] = []
+	return {
+		waits,
+		input: {
+			deviceCode: "dc_abc",
+			interval: 5,
+			expiresAt: EXPIRES,
+			sleep: async (ms: number) => {
+				waits.push(ms)
+			},
+			now: NOW,
+			url: `http://127.0.0.1:${server.port}`,
+			fetch,
+			...overrides,
+		},
+	}
 }
 
 describe("authorizeDeviceCode", () => {
@@ -109,10 +114,6 @@ describe("authorizeDeviceCode", () => {
 })
 
 describe("pollForToken", () => {
-	const base = 1_700_000_000_000
-	const now = () => base
-	const expiresAt = Math.floor(base / 1000) + 60
-
 	it("retries on authorization_pending then returns token", async () => {
 		const calls = { count: 0 }
 		const token: TokenResponse = {
@@ -137,20 +138,10 @@ describe("pollForToken", () => {
 			},
 		})
 
-		const waits: number[] = []
+		const { waits, input } = polling(server)
 		try {
 			const { pollForToken } = await load()
-			const res = await pollForToken({
-				deviceCode: "dc_abc",
-				interval: 5,
-				expiresAt,
-				sleep: async (ms) => {
-					waits.push(ms)
-				},
-				now,
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
+			const res = await pollForToken(input)
 			expect(res).toEqual(token)
 			expect(waits).toEqual([5000])
 		} finally {
@@ -176,20 +167,10 @@ describe("pollForToken", () => {
 			},
 		})
 
-		const waits: number[] = []
+		const { waits, input } = polling(server)
 		try {
 			const { pollForToken } = await load()
-			const res = await pollForToken({
-				deviceCode: "dc_abc",
-				interval: 5,
-				expiresAt,
-				sleep: async (ms) => {
-					waits.push(ms)
-				},
-				now,
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
+			const res = await pollForToken(input)
 			expect(res).toEqual(token)
 			expect(waits).toEqual([10_000])
 		} finally {
@@ -215,20 +196,10 @@ describe("pollForToken", () => {
 			},
 		})
 
-		const waits: number[] = []
+		const { waits, input } = polling(server)
 		try {
 			const { pollForToken } = await load()
-			const res = await pollForToken({
-				deviceCode: "dc_abc",
-				interval: 5,
-				expiresAt,
-				sleep: async (ms) => {
-					waits.push(ms)
-				},
-				now,
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
+			const res = await pollForToken(input)
 			expect(res).toEqual(token)
 			expect(waits).toEqual([10_000])
 		} finally {
@@ -242,18 +213,10 @@ describe("pollForToken", () => {
 			fetch: () => Response.json({ error: "access_denied" }),
 		})
 
+		const { input } = polling(server)
 		try {
 			const { pollForToken } = await load()
-			const run = pollForToken({
-				deviceCode: "dc_abc",
-				interval: 5,
-				expiresAt,
-				sleep: async () => {},
-				now,
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
-			await expect(run).rejects.toThrow("access_denied")
+			await expect(pollForToken(input)).rejects.toThrow("access_denied")
 		} finally {
 			server.stop()
 		}
@@ -265,18 +228,10 @@ describe("pollForToken", () => {
 			fetch: () => Response.json({ error: "expired_token" }),
 		})
 
+		const { input } = polling(server)
 		try {
 			const { pollForToken } = await load()
-			const run = pollForToken({
-				deviceCode: "dc_abc",
-				interval: 5,
-				expiresAt,
-				sleep: async () => {},
-				now,
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
-			await expect(run).rejects.toThrow("expired_token")
+			await expect(pollForToken(input)).rejects.toThrow("expired_token")
 		} finally {
 			server.stop()
 		}
@@ -288,19 +243,11 @@ describe("pollForToken", () => {
 			fetch: () => Response.json({ error: "authorization_pending" }),
 		})
 
-		const expired = Math.floor(base / 1000) - 1
+		const expired = Math.floor(BASE_TIME / 1000) - 1
+		const { input } = polling(server, { expiresAt: expired })
 		try {
 			const { pollForToken } = await load()
-			const run = pollForToken({
-				deviceCode: "dc_abc",
-				interval: 5,
-				expiresAt: expired,
-				sleep: async () => {},
-				now,
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
-			await expect(run).rejects.toThrow("expired_token")
+			await expect(pollForToken(input)).rejects.toThrow("expired_token")
 		} finally {
 			server.stop()
 		}

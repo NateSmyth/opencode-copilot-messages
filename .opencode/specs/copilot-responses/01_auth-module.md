@@ -103,12 +103,12 @@ This is done:
 
 #### Phase: REFACTOR
 
-- [ ] [T08] Tighten error messages and edge-case handling without changing test intent (no test edits)
-- [ ] [T09] Remove duplication between tests, standardize helpers, and ensure style-guide compliance (no `let`, avoid `else`)
+- [x] [T08] Tighten error messages and edge-case handling without changing test intent (no test edits)
+- [x] [T09] Remove duplication between tests, standardize helpers, and ensure style-guide compliance (no `let`, avoid `else`)
 
 ---
 
-- [ ] **COMMIT**: `refactor: tighten auth module and tests`
+- [x] **COMMIT**: `refactor: tighten auth module and tests`
 
 ### Details
 

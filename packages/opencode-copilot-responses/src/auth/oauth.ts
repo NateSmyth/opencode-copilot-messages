@@ -96,7 +96,7 @@ export async function pollForToken(input: {
 		if (data.error === "access_denied") throw new Error("access_denied")
 
 		const detail = data.error_description ? ` ${data.error_description}` : ""
-		throw new Error(`${data.error}${detail}`)
+		throw new Error(`${String(data.error)}${detail}`)
 	}
 
 	return step(input.interval)
