@@ -104,16 +104,16 @@ This is done:
 
 ### Checklist
 
-- [ ] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
+- [x] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
 
 #### Phase: RED
 
-- [ ] [T01] Add RED tests for `copilotResponsesFetch()` stripping `x-api-key` and injecting required Copilot headers
-- [ ] [T02] Add RED tests for `determineInitiator()` (user text → user, function_call_output → agent, empty → agent)
-- [ ] [T03] Add RED tests for `hasImageContent()` (input_image → true, no images → false)
-- [ ] [T04] Add RED tests for internal agent detection via `instructions`/`system` prefix forcing `x-initiator: agent`
-- [ ] [T05] Add RED tests that caller-supplied `x-initiator` is preserved and non-conflicting headers are preserved
-- [ ] [T06] Add RED test that malformed/unparseable bodies do not throw and default initiator to agent
+- [x] [T01] Add RED tests for `copilotResponsesFetch()` stripping `x-api-key` and injecting required Copilot headers
+- [x] [T02] Add RED tests for `determineInitiator()` (user text → user, function_call_output → agent, empty → agent)
+- [x] [T03] Add RED tests for `hasImageContent()` (input_image → true, no images → false)
+- [x] [T04] Add RED tests for internal agent detection via `instructions`/`system` prefix forcing `x-initiator: agent`
+- [x] [T05] Add RED tests that caller-supplied `x-initiator` is preserved and non-conflicting headers are preserved
+- [x] [T06] Add RED test that malformed/unparseable bodies do not throw and default initiator to agent
 
 ---
 
