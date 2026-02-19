@@ -113,18 +113,18 @@ This is done:
 
 #### Phase: GREEN
 
-- [ ] [T06] Implement `config` hook in `src/plugin.ts` to register `copilot-responses` provider only when missing
-- [ ] [T07] Implement `auth.methods[0].authorize()` in `src/plugin.ts` using device flow + polling + entitlement check; return `success` auth including `baseUrl`
-- [ ] [T08] Implement `auth.loader()` in `src/plugin.ts`:
+- [x] [T06] Implement `config` hook in `src/plugin.ts` to register `copilot-responses` provider only when missing
+- [x] [T07] Implement `auth.methods[0].authorize()` in `src/plugin.ts` using device flow + polling + entitlement check; return `success` auth including `baseUrl`
+- [x] [T08] Implement `auth.loader()` in `src/plugin.ts`:
   - validate stored auth shape and `gho_` token
   - resolve `baseUrl` (use cached value, otherwise entitlement fallback)
   - fetch `/models` and merge into provider models (user config wins for `limit`, `options`, `headers`, `variants`)
-  - return `{ name: "openai", apiKey: "", baseURL, fetch: customFetch }` where `customFetch` delegates to `copilotResponsesFetch`
-- [ ] [T09] Implement `chat.headers` hook in `src/plugin.ts` to set `x-initiator: agent` for sessions with `parentID` (and safely no-op on lookup failure)
+  - return `{ name: "openai", apiKey: "", baseURL: baseUrl, fetch: customFetch }` where `customFetch` delegates to `copilotResponsesFetch`
+- [x] [T09] Implement `chat.headers` hook in `src/plugin.ts` to set `x-initiator: agent` for sessions with `parentID` (and safely no-op on lookup failure)
 
 ---
 
-- [ ] **COMMIT**: `feat: integrate copilot responses plugin hooks`
+- [x] **COMMIT**: `feat: integrate copilot responses plugin hooks`
 
 #### Phase: REFACTOR
 
