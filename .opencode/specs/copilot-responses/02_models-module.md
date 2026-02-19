@@ -123,12 +123,12 @@ This is done:
 
 ---
 
-- [ ] **COMMIT**: `feat: fetch and map copilot responses models`
+- [x] **COMMIT**: `feat: fetch and map copilot responses models`
 
 #### Phase: REFACTOR
 
-- [ ] [T11] Tighten types + defaults (no `any`, avoid `let`/`else`), and keep mapping logic in one place (`mapToOpencodeModel`)
-- [ ] [T12] Remove duplication in tests with small helpers (model factory, server factory) without duplicating implementation logic
+- [x] [T11] Tighten types + defaults (no `any`, avoid `let`/`else`), and keep mapping logic in one place (`mapToOpencodeModel`)
+- [x] [T12] Remove duplication in tests with small helpers (model factory, server factory) without duplicating implementation logic
 
 ---
 

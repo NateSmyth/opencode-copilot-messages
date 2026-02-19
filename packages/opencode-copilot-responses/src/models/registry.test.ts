@@ -72,6 +72,15 @@ const minimal = (id: string, endpoints: string[]): CopilotModel => ({
 	supported_endpoints: endpoints,
 })
 
+function serve(handler: (req: Request) => Response | Promise<Response>) {
+	const server = Bun.serve({ port: 0, fetch: handler })
+	return { url: `http://127.0.0.1:${server.port}`, stop: () => server.stop() }
+}
+
+function serveModels(models: CopilotModel[]) {
+	return serve(() => Response.json({ data: models }))
+}
+
 // Real-world fixture: gpt-5.3-codex from Copilot /models payload
 const GPT53_FIXTURE: CopilotModel = {
 	id: "gpt-5.3-codex",
@@ -181,15 +190,10 @@ describe("copilot responses model registry", () => {
 			},
 		}
 
-		const server = Bun.serve({
-			port: 0,
-			fetch: async () => Response.json({ data: [reasoning] }),
-		})
-
+		const { url, stop } = serveModels([reasoning])
 		const { fetchModels } = await load()
-		const url = `http://127.0.0.1:${server.port}`
 		const result = await fetchModels({ token: "tok", baseUrl: url })
-		server.stop()
+		stop()
 
 		expect(result.length).toBe(1)
 		expect(result[0].capabilities.reasoning).toBe(true)
@@ -216,15 +220,10 @@ describe("copilot responses model registry", () => {
 			},
 		}
 
-		const server = Bun.serve({
-			port: 0,
-			fetch: async () => Response.json({ data: [vision] }),
-		})
-
+		const { url, stop } = serveModels([vision])
 		const { fetchModels } = await load()
-		const url = `http://127.0.0.1:${server.port}`
 		const result = await fetchModels({ token: "tok", baseUrl: url })
-		server.stop()
+		stop()
 
 		expect(result.length).toBe(1)
 		expect(result[0].capabilities.attachment).toBe(true)
@@ -232,15 +231,10 @@ describe("copilot responses model registry", () => {
 	})
 
 	it("sets correct invariants on all mapped models", async () => {
-		const server = Bun.serve({
-			port: 0,
-			fetch: async () => Response.json({ data: [minimal("gpt-inv", ["/responses"])] }),
-		})
-
+		const { url, stop } = serveModels([minimal("gpt-inv", ["/responses"])])
 		const { fetchModels } = await load()
-		const url = `http://127.0.0.1:${server.port}`
 		const result = await fetchModels({ token: "tok", baseUrl: url })
-		server.stop()
+		stop()
 
 		const model = result[0]
 		expect(model.providerID).toBe("copilot-responses")
