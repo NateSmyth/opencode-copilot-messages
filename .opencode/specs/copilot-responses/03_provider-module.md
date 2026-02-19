@@ -136,7 +136,7 @@ This is done:
 
 ---
 
-- [ ] **COMMIT**: `refactor: tighten provider module and tests`
+- [x] **COMMIT**: `refactor: tighten provider module and tests`
 
 ### Details
 
