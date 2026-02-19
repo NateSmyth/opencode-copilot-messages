@@ -1,3 +1,5 @@
+import { RESPONSES_AGENT } from "../auth/headers"
+
 export interface HeaderContext {
 	token: string
 	initiator: "user" | "agent"
@@ -7,6 +9,7 @@ export interface HeaderContext {
 export function buildHeaders(context: HeaderContext): Record<string, string> {
 	const headers: Record<string, string> = {
 		authorization: `Bearer ${context.token}`,
+		"user-agent": RESPONSES_AGENT,
 		"copilot-integration-id": "copilot-developer-cli",
 		"x-github-api-version": "2025-05-01",
 		"x-interaction-type": "conversation-agent",

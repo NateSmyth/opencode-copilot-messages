@@ -1,3 +1,5 @@
+import { AUTH_AGENT } from "./headers"
+
 export async function fetchEntitlement(input: {
 	token: string
 	fetch?: typeof fetch
@@ -11,6 +13,7 @@ export async function fetchEntitlement(input: {
 		headers: {
 			Authorization: `Bearer ${input.token}`,
 			Accept: "application/json",
+			"User-Agent": AUTH_AGENT,
 		},
 	})
 

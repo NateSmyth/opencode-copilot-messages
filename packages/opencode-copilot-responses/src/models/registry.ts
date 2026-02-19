@@ -1,4 +1,5 @@
 import type { Model } from "@opencode-ai/sdk"
+import { MODELS_AGENT } from "../auth/headers"
 
 export interface CopilotModel {
 	id: string
@@ -104,7 +105,7 @@ export async function fetchModels(input: {
 	const url = new URL("/models", input.baseUrl)
 	const headers = {
 		authorization: `Bearer ${input.token}`,
-		"user-agent": "copilot-developer-cli/0.1.0",
+		"user-agent": MODELS_AGENT,
 		"copilot-integration-id": "copilot-developer-cli",
 		"x-github-api-version": "2025-05-01",
 		"x-interaction-type": "model-access",

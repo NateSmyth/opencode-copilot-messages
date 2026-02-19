@@ -1,3 +1,5 @@
+import { AUTH_AGENT } from "./headers"
+
 export const CLIENT_ID = "Ov23ctDVkRmgkPke0Mmm"
 
 export async function authorizeDeviceCode(input?: {
@@ -17,6 +19,7 @@ export async function authorizeDeviceCode(input?: {
 		headers: {
 			Accept: "application/json",
 			"Content-Type": "application/x-www-form-urlencoded",
+			"User-Agent": AUTH_AGENT,
 		},
 		body: new URLSearchParams({ client_id: id, scope }).toString(),
 	})
@@ -67,6 +70,7 @@ export async function pollForToken(input: {
 			headers: {
 				Accept: "application/json",
 				"Content-Type": "application/x-www-form-urlencoded",
+				"User-Agent": AUTH_AGENT,
 			},
 			body: new URLSearchParams({
 				client_id: id,
@@ -78,7 +82,11 @@ export async function pollForToken(input: {
 		const data = (await res.json()) as Record<string, unknown>
 
 		if ("access_token" in data) {
-			return data as { access_token: string; token_type: string; scope: string }
+			return data as {
+				access_token: string
+				token_type: string
+				scope: string
+			}
 		}
 
 		if (data.error === "authorization_pending") {
