@@ -78,8 +78,115 @@ This is done:
 
 ### Checklist
 
-[TBD — to be filled during planning phase]
+- [ ] [T00] Establish baseline: `cd packages/opencode-copilot-responses && bun test`
+
+#### Phase: RED
+
+- [ ] [T01] Add RED tests for `authorizeDeviceCode()` request + response shape
+- [ ] [T02] Add RED tests for `pollForToken()` retry + error handling (`authorization_pending`, `slow_down`, `access_denied`, `expired_token`)
+- [ ] [T03] Add RED tests for `fetchEntitlement()` base URL extraction + non-OK error
+- [ ] [T04] Add RED tests for `StoredAuth` shape including `baseUrl`
+
+---
+
+- [ ] **COMMIT**: `test: auth oauth device flow and entitlement`
+
+#### Phase: GREEN
+
+- [ ] [T05] Implement `src/auth/oauth.ts` (`authorizeDeviceCode`, `pollForToken`) with injectable deps and form-encoded POST bodies
+- [ ] [T06] Implement `src/auth/entitlement.ts` (`fetchEntitlement`) with injectable deps and robust parsing
+- [ ] [T07] Implement `src/auth/types.ts` (`StoredAuth`) and export auth surface from `src/auth/index.ts`
+
+---
+
+- [ ] **COMMIT**: `feat: add auth module oauth and entitlement`
+
+#### Phase: REFACTOR
+
+- [ ] [T08] Tighten error messages and edge-case handling without changing test intent (no test edits)
+- [ ] [T09] Remove duplication between tests, standardize helpers, and ensure style-guide compliance (no `let`, avoid `else`)
+
+---
+
+- [ ] **COMMIT**: `refactor: tighten auth module and tests`
 
 ### Details
 
-[TBD — to be filled during planning phase]
+- [T00] Baseline must be green before writing RED tests so failures are attributable to new tests.
+
+- [T01] File: `packages/opencode-copilot-responses/src/auth/oauth.test.ts`
+  - Stand up a real HTTP server with `Bun.serve({ port: 0, fetch(req) { ... } })`.
+  - Call `authorizeDeviceCode({ url, fetch, clientId, scope })` with `url` pointing at the test server.
+  - Assert:
+    - `POST /login/device/code`
+    - body includes `client_id: "Ov23ctDVkRmgkPke0Mmm"` and `scope: "read:user"`
+    - response JSON is returned verbatim as `{ device_code, user_code, verification_uri, expires_in, interval }`
+  - Avoid encoding assumptions in tests by accepting either:
+    - `application/x-www-form-urlencoded` (preferred), parsing via `new URLSearchParams(await req.text())`, or
+    - JSON, parsing via `JSON.parse(await req.text())`.
+
+- [T02] File: `packages/opencode-copilot-responses/src/auth/oauth.test.ts`
+  - Use injected `sleep` to avoid real delays; record the requested milliseconds.
+  - Use injected `now` to control time and avoid flakiness.
+  - Server behavior per call count:
+    - 1st call returns `{ error: "authorization_pending" }` → expect one sleep of `interval * 1000`, then retry.
+    - 1st call returns `{ error: "slow_down", interval: <n> }` → expect sleep of `<n> * 1000` (fall back to `interval + 5` when `interval` missing), then retry.
+    - Return `{ error: "access_denied" }` → expect `pollForToken()` rejects with an error containing `access_denied`.
+    - Return `{ error: "expired_token" }` or time surpasses `expiresAt` → expect rejection containing `expired_token`.
+    - Success returns `{ access_token, token_type, scope }`.
+
+- [T03] Files:
+  - `packages/opencode-copilot-responses/src/auth/entitlement.test.ts`
+  - `packages/opencode-copilot-responses/src/auth/entitlement.ts`
+  - Test server should assert `GET /copilot_internal/user` includes `Authorization: Bearer gho_<token>`.
+  - Happy-path response fixture should include at minimum:
+    - `login: "octocat"`
+    - `endpoints: { api: "https://api.individual.githubcopilot.com" }`
+  - `fetchEntitlement({ token, url, fetch })` returns `{ baseUrl: endpoints.api, login }`.
+  - Non-OK response (e.g., 403/404/500) must throw an error that makes it clear entitlement failed and includes status.
+  - Parse defensively: if `endpoints.api` is missing/empty, throw a clear error (this prevents later modules from silently using a bad base URL).
+
+- [T04] File: `packages/opencode-copilot-responses/src/auth/types.ts`
+  - Define `StoredAuth` to match persisted shape used by later tasks:
+    - `{ type: "oauth", refresh: string, access: string, expires: 0, baseUrl: string }`.
+  - Keep the type minimal (no methods). This task only defines the storage contract.
+
+- [T05] File: `packages/opencode-copilot-responses/src/auth/oauth.ts`
+  - Export `CLIENT_ID = "Ov23ctDVkRmgkPke0Mmm"`.
+  - `authorizeDeviceCode(input?)`:
+    - Injectables: `fetch`, `url` (default `https://github.com`), `clientId` (default `CLIENT_ID`), `scope` (default `read:user`).
+    - POST to `/login/device/code`.
+    - Prefer form encoding: `body: new URLSearchParams({ client_id, scope })` and `Content-Type: application/x-www-form-urlencoded`.
+    - Always set `Accept: application/json`.
+    - On non-OK: throw `Error` including status + pathname.
+  - `pollForToken(input)`:
+    - Inputs: `{ deviceCode, interval, expiresAt, fetch?, url?, clientId?, sleep?, now? }`.
+    - POST to `/login/oauth/access_token` with form-encoded fields:
+      - `client_id`, `device_code`, `grant_type: "urn:ietf:params:oauth:grant-type:device_code"`.
+    - Retry behavior:
+      - `authorization_pending` → sleep `interval` seconds and retry.
+      - `slow_down` → increase delay (use `data.interval` when provided; otherwise `interval + 5`) and retry.
+      - `access_denied` / `expired_token` → throw errors that preserve the error code string.
+    - Expiration guard: if `Math.floor(now()/1000) >= expiresAt`, throw `expired_token`.
+
+- [T06] File: `packages/opencode-copilot-responses/src/auth/entitlement.ts`
+  - Function signature:
+    - `export async function fetchEntitlement(input: { token: string; fetch?: typeof fetch; url?: string })`
+  - Defaults: `url` defaults to `https://api.github.com`.
+  - Request:
+    - `GET /copilot_internal/user`
+    - headers: `Authorization: Bearer ${token}`, `Accept: application/json` (and add a minimal `User-Agent` if needed later).
+  - Response parsing:
+    - `const api = data.endpoints?.api` → validate it’s a non-empty string.
+    - return `{ baseUrl: api, login: data.login }`.
+
+- [T07] Files:
+  - `packages/opencode-copilot-responses/src/auth/index.ts` (barrel)
+  - Ensure other tasks can import from `src/auth` without deep paths, e.g. `import { authorizeDeviceCode } from "./auth"`.
+
+- [T08] Keep error strings stable enough for tests (assert on substrings like `access_denied`, `expired_token`). Avoid introducing custom error classes unless needed by later tasks.
+
+- [T09] Test cleanup guidance:
+  - Prefer small helper functions (e.g., `server()` factory) over shared mutable state.
+  - Avoid `let` and `else`; use early returns and expression-based constants.
+  - Don’t copy implementation parsing logic into tests; tests should validate observable behavior (requests made, retries/sleeps, thrown errors, returned shapes).
