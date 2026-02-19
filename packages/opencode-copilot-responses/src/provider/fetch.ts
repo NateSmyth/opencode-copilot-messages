@@ -84,13 +84,14 @@ function isSSE(response: Response): boolean {
 
 // Strip id fields from input items before sending to the Copilot proxy.
 // The proxy re-encrypts item IDs per-response; stale IDs from previous turns
-// cause "reasoning part ... not found" errors on multi-turn conversations.
+// are unresolvable.  Skip item_reference — its id IS the payload.
 function stripIds(body: RequestInit["body"] | null | undefined): string | null | undefined {
 	if (typeof body !== "string") return body as null | undefined
 	try {
 		const parsed = JSON.parse(body) as Record<string, unknown>
 		if (!Array.isArray(parsed.input)) return body
 		for (const item of parsed.input as Record<string, unknown>[]) {
+			if (item.type === "item_reference") continue
 			delete item.id
 		}
 		return JSON.stringify(parsed)

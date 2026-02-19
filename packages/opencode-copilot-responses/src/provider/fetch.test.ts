@@ -426,7 +426,7 @@ describe("copilotResponsesFetch", () => {
 		expect(call.name).toBe("bash")
 	})
 
-	it("strips id from item_reference items in input", async () => {
+	it("preserves id on item_reference items in input", async () => {
 		let received: unknown
 		await withServer(
 			async (req) => {
@@ -437,7 +437,7 @@ describe("copilotResponsesFetch", () => {
 				await copilotResponsesFetch(
 					url,
 					post({
-						input: [{ type: "item_reference", id: "stale-encrypted-id==" }],
+						input: [{ type: "item_reference", id: "ref-id-to-keep" }],
 					}),
 					{ token: "t" }
 				)
@@ -445,7 +445,7 @@ describe("copilotResponsesFetch", () => {
 		)
 		const input = (received as Record<string, unknown>).input as unknown[]
 		const ref = input[0] as Record<string, unknown>
-		expect("id" in ref).toBe(false)
+		expect(ref.id).toBe("ref-id-to-keep")
 		expect(ref.type).toBe("item_reference")
 	})
 
