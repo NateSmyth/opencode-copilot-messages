@@ -86,7 +86,7 @@ export function mapToOpencodeModel(model: CopilotModel, baseUrl: string): Model 
 			},
 		},
 		limit: {
-			context: limits.max_context_window_tokens ?? 200000,
+			context: limits.max_prompt_tokens ?? 128000,
 			output: limits.max_output_tokens ?? 64000,
 		},
 		status: model.preview ? "beta" : "active",
