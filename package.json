@@ -26,7 +26,7 @@
 	},
 	"lint-staged": {
 		"**/*.{ts,tsx,js,jsx,json}": [
-			"biome check --write",
+			"biome check --write --error-on-warnings",
 			"biome format --write"
 		]
 	}
