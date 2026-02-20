@@ -60,7 +60,7 @@ findings:
       Assert header presence or match against a documented constant.
 
   - id: auth-003
-    status: open
+    status: resolved
     severity: low
     confidence: certain
     category: structure

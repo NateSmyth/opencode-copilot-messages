@@ -59,7 +59,7 @@ findings:
       Style guide prefers direct property access to preserve context.
 
   - id: style-002
-    status: open
+    status: resolved
     severity: low
     confidence: certain
     category: convention

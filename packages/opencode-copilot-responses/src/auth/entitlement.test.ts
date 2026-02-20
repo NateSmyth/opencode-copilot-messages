@@ -19,11 +19,22 @@ async function load() {
 	return mod.fetchEntitlement
 }
 
+async function withServer(
+	handler: (req: Request) => Response | Promise<Response>,
+	run: (url: string) => Promise<void>
+) {
+	const server = Bun.serve({ port: 0, fetch: handler })
+	try {
+		await run(`http://127.0.0.1:${server.port}`)
+	} finally {
+		server.stop()
+	}
+}
+
 describe("fetchEntitlement", () => {
 	it("GETs /copilot_internal/user with bearer token and returns baseUrl + login", async () => {
-		const server = Bun.serve({
-			port: 0,
-			async fetch(req) {
+		await withServer(
+			async (req) => {
 				expect(new URL(req.url).pathname).toBe("/copilot_internal/user")
 				expect(req.method).toBe("GET")
 				expect(req.headers.get("authorization")).toBe("Bearer gho_abc123")
@@ -36,76 +47,45 @@ describe("fetchEntitlement", () => {
 					},
 				})
 			},
-		})
-
-		try {
-			const fetchEntitlement = await load()
-			const res = await fetchEntitlement({
-				token: "gho_abc123",
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
-			expect(res.baseUrl).toBe("https://api.individual.githubcopilot.com")
-			expect(res.login).toBe("octocat")
-		} finally {
-			server.stop()
-		}
+			async (url) => {
+				const fetchEntitlement = await load()
+				const res = await fetchEntitlement({ token: "gho_abc123", url, fetch })
+				expect(res.baseUrl).toBe("https://api.individual.githubcopilot.com")
+				expect(res.login).toBe("octocat")
+			}
+		)
 	})
 
 	it("throws on non-OK response including status", async () => {
-		const server = Bun.serve({
-			port: 0,
-			fetch: () => new Response("forbidden", { status: 403 }),
-		})
-
-		try {
-			const fetchEntitlement = await load()
-			const run = fetchEntitlement({
-				token: "gho_bad",
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
-			await expect(run).rejects.toThrow(/403/)
-		} finally {
-			server.stop()
-		}
+		await withServer(
+			() => new Response("forbidden", { status: 403 }),
+			async (url) => {
+				const fetchEntitlement = await load()
+				const run = fetchEntitlement({ token: "gho_bad", url, fetch })
+				await expect(run).rejects.toThrow(/403/)
+			}
+		)
 	})
 
 	it("throws when endpoints.api is missing", async () => {
-		const server = Bun.serve({
-			port: 0,
-			fetch: () => Response.json({ login: "octocat", endpoints: {} }),
-		})
-
-		try {
-			const fetchEntitlement = await load()
-			const run = fetchEntitlement({
-				token: "gho_noapi",
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
-			await expect(run).rejects.toThrow()
-		} finally {
-			server.stop()
-		}
+		await withServer(
+			() => Response.json({ login: "octocat", endpoints: {} }),
+			async (url) => {
+				const fetchEntitlement = await load()
+				const run = fetchEntitlement({ token: "gho_noapi", url, fetch })
+				await expect(run).rejects.toThrow()
+			}
+		)
 	})
 
 	it("throws when endpoints is missing entirely", async () => {
-		const server = Bun.serve({
-			port: 0,
-			fetch: () => Response.json({ login: "octocat" }),
-		})
-
-		try {
-			const fetchEntitlement = await load()
-			const run = fetchEntitlement({
-				token: "gho_noendpoints",
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
-			await expect(run).rejects.toThrow()
-		} finally {
-			server.stop()
-		}
+		await withServer(
+			() => Response.json({ login: "octocat" }),
+			async (url) => {
+				const fetchEntitlement = await load()
+				const run = fetchEntitlement({ token: "gho_noendpoints", url, fetch })
+				await expect(run).rejects.toThrow()
+			}
+		)
 	})
 })

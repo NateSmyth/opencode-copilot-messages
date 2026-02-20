@@ -26,11 +26,23 @@ async function load() {
 	return mod as Required<typeof mod>
 }
 
+async function withServer(
+	handler: (req: Request) => Response | Promise<Response>,
+	run: (url: string) => Promise<void>
+) {
+	const server = Bun.serve({ port: 0, fetch: handler })
+	try {
+		await run(`http://127.0.0.1:${server.port}`)
+	} finally {
+		server.stop()
+	}
+}
+
 const BASE_TIME = 1_700_000_000_000
 const NOW = () => BASE_TIME
 const EXPIRES = Math.floor(BASE_TIME / 1000) + 60
 
-function polling(server: { port?: number }, overrides?: Record<string, unknown>) {
+function polling(url: string, overrides?: Record<string, unknown>) {
 	const waits: number[] = []
 	return {
 		waits,
@@ -42,7 +54,7 @@ function polling(server: { port?: number }, overrides?: Record<string, unknown>)
 				waits.push(ms)
 			},
 			now: NOW,
-			url: `http://127.0.0.1:${server.port}`,
+			url,
 			fetch,
 			...overrides,
 		},
@@ -59,9 +71,8 @@ describe("authorizeDeviceCode", () => {
 			interval: 5,
 		}
 
-		const server = Bun.serve({
-			port: 0,
-			async fetch(req) {
+		await withServer(
+			async (req) => {
 				const path = new URL(req.url).pathname
 				expect(path).toBe("/login/device/code")
 				expect(req.method).toBe("POST")
@@ -76,18 +87,12 @@ describe("authorizeDeviceCode", () => {
 				expect(params.get("scope")).toBe("read:user")
 				return Response.json(fixture)
 			},
-		})
-
-		try {
-			const { authorizeDeviceCode } = await load()
-			const res = await authorizeDeviceCode({
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
-			expect(res).toEqual(fixture)
-		} finally {
-			server.stop()
-		}
+			async (url) => {
+				const { authorizeDeviceCode } = await load()
+				const res = await authorizeDeviceCode({ url, fetch })
+				expect(res).toEqual(fixture)
+			}
+		)
 	})
 
 	it("uses the exported CLIENT_ID constant", async () => {
@@ -96,21 +101,14 @@ describe("authorizeDeviceCode", () => {
 	})
 
 	it("throws on non-OK response", async () => {
-		const server = Bun.serve({
-			port: 0,
-			fetch: () => new Response("bad", { status: 500 }),
-		})
-
-		try {
-			const { authorizeDeviceCode } = await load()
-			const run = authorizeDeviceCode({
-				url: `http://127.0.0.1:${server.port}`,
-				fetch,
-			})
-			await expect(run).rejects.toThrow(/500/)
-		} finally {
-			server.stop()
-		}
+		await withServer(
+			() => new Response("bad", { status: 500 }),
+			async (url) => {
+				const { authorizeDeviceCode } = await load()
+				const run = authorizeDeviceCode({ url, fetch })
+				await expect(run).rejects.toThrow(/500/)
+			}
+		)
 	})
 })
 
@@ -122,9 +120,9 @@ describe("pollForToken", () => {
 			token_type: "bearer",
 			scope: "read:user",
 		}
-		const server = Bun.serve({
-			port: 0,
-			async fetch(req) {
+
+		await withServer(
+			async (req) => {
 				expect(new URL(req.url).pathname).toBe("/login/oauth/access_token")
 
 				expect(req.headers.get("user-agent")).toBeTruthy()
@@ -138,17 +136,14 @@ describe("pollForToken", () => {
 				}
 				return Response.json(token)
 			},
-		})
-
-		const { waits, input } = polling(server)
-		try {
-			const { pollForToken } = await load()
-			const res = await pollForToken(input)
-			expect(res).toEqual(token)
-			expect(waits).toEqual([5000])
-		} finally {
-			server.stop()
-		}
+			async (url) => {
+				const { waits, input } = polling(url)
+				const { pollForToken } = await load()
+				const res = await pollForToken(input)
+				expect(res).toEqual(token)
+				expect(waits).toEqual([5000])
+			}
+		)
 	})
 
 	it("increases delay on slow_down with server-provided interval", async () => {
@@ -158,26 +153,23 @@ describe("pollForToken", () => {
 			token_type: "bearer",
 			scope: "read:user",
 		}
-		const server = Bun.serve({
-			port: 0,
-			async fetch() {
+
+		await withServer(
+			async () => {
 				calls.count += 1
 				if (calls.count === 1) {
 					return Response.json({ error: "slow_down", interval: 10 })
 				}
 				return Response.json(token)
 			},
-		})
-
-		const { waits, input } = polling(server)
-		try {
-			const { pollForToken } = await load()
-			const res = await pollForToken(input)
-			expect(res).toEqual(token)
-			expect(waits).toEqual([10_000])
-		} finally {
-			server.stop()
-		}
+			async (url) => {
+				const { waits, input } = polling(url)
+				const { pollForToken } = await load()
+				const res = await pollForToken(input)
+				expect(res).toEqual(token)
+				expect(waits).toEqual([10_000])
+			}
+		)
 	})
 
 	it("falls back to interval+5 when slow_down has no interval", async () => {
@@ -187,71 +179,57 @@ describe("pollForToken", () => {
 			token_type: "bearer",
 			scope: "read:user",
 		}
-		const server = Bun.serve({
-			port: 0,
-			async fetch() {
+
+		await withServer(
+			async () => {
 				calls.count += 1
 				if (calls.count === 1) {
 					return Response.json({ error: "slow_down" })
 				}
 				return Response.json(token)
 			},
-		})
-
-		const { waits, input } = polling(server)
-		try {
-			const { pollForToken } = await load()
-			const res = await pollForToken(input)
-			expect(res).toEqual(token)
-			expect(waits).toEqual([10_000])
-		} finally {
-			server.stop()
-		}
+			async (url) => {
+				const { waits, input } = polling(url)
+				const { pollForToken } = await load()
+				const res = await pollForToken(input)
+				expect(res).toEqual(token)
+				expect(waits).toEqual([10_000])
+			}
+		)
 	})
 
 	it("throws on access_denied", async () => {
-		const server = Bun.serve({
-			port: 0,
-			fetch: () => Response.json({ error: "access_denied" }),
-		})
-
-		const { input } = polling(server)
-		try {
-			const { pollForToken } = await load()
-			await expect(pollForToken(input)).rejects.toThrow("access_denied")
-		} finally {
-			server.stop()
-		}
+		await withServer(
+			() => Response.json({ error: "access_denied" }),
+			async (url) => {
+				const { input } = polling(url)
+				const { pollForToken } = await load()
+				await expect(pollForToken(input)).rejects.toThrow("access_denied")
+			}
+		)
 	})
 
 	it("throws on expired_token from server", async () => {
-		const server = Bun.serve({
-			port: 0,
-			fetch: () => Response.json({ error: "expired_token" }),
-		})
-
-		const { input } = polling(server)
-		try {
-			const { pollForToken } = await load()
-			await expect(pollForToken(input)).rejects.toThrow("expired_token")
-		} finally {
-			server.stop()
-		}
+		await withServer(
+			() => Response.json({ error: "expired_token" }),
+			async (url) => {
+				const { input } = polling(url)
+				const { pollForToken } = await load()
+				await expect(pollForToken(input)).rejects.toThrow("expired_token")
+			}
+		)
 	})
 
 	it("throws expired_token when time exceeds expiresAt", async () => {
-		const server = Bun.serve({
-			port: 0,
-			fetch: () => Response.json({ error: "authorization_pending" }),
-		})
-
 		const expired = Math.floor(BASE_TIME / 1000) - 1
-		const { input } = polling(server, { expiresAt: expired })
-		try {
-			const { pollForToken } = await load()
-			await expect(pollForToken(input)).rejects.toThrow("expired_token")
-		} finally {
-			server.stop()
-		}
+
+		await withServer(
+			() => Response.json({ error: "authorization_pending" }),
+			async (url) => {
+				const { input } = polling(url, { expiresAt: expired })
+				const { pollForToken } = await load()
+				await expect(pollForToken(input)).rejects.toThrow("expired_token")
+			}
+		)
 	})
 })
