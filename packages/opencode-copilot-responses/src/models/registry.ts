@@ -113,6 +113,7 @@ export async function fetchModels(input: {
 		"x-request-id": crypto.randomUUID(),
 	}
 	const res = await run(url, { method: "GET", headers })
+	if (!res.ok) return []
 	const data = (await res.json()) as unknown
 	const models = parseModels(data)
 	return models

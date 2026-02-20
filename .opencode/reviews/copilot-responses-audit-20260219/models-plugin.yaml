@@ -30,7 +30,7 @@ summary:
 
 findings:
   - id: models-001
-    status: open
+    status: resolved
     severity: medium
     confidence: certain
     category: bug
