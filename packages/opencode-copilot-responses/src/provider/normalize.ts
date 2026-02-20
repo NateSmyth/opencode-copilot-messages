@@ -29,14 +29,14 @@ export function normalizeReasoningIds(
 				buffer += decoder.decode(chunk, { stream: true })
 				const parts = buffer.split("\n\n")
 				// keep incomplete trailing block in buffer
-				buffer = parts.pop()!
+				buffer = parts.pop() ?? ""
 				for (const block of parts) {
-					controller.enqueue(encoder.encode(rewrite(block, canonical) + "\n\n"))
+					controller.enqueue(encoder.encode(`${rewrite(block, canonical)}\n\n`))
 				}
 			},
 			flush(controller) {
 				if (buffer.trim()) {
-					controller.enqueue(encoder.encode(rewrite(buffer, canonical) + "\n\n"))
+					controller.enqueue(encoder.encode(`${rewrite(buffer, canonical)}\n\n`))
 				}
 			},
 		})
