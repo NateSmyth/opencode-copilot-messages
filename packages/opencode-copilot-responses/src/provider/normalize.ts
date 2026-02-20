@@ -1,13 +1,4 @@
-// The Copilot proxy re-encrypts item IDs on every SSE event, producing
-// different `item_id` / `item.id` values for what is logically the same
-// output item.  The stock @ai-sdk/openai SDK tracks reasoning (and text)
-// parts by these IDs, so rotated IDs cause "reasoning part … not found"
-// errors in the Vercel AI core.
-//
-// This transform normalises the stream: on `response.output_item.added`
-// we record the *first* id for each `output_index`, then rewrite every
-// subsequent event that references the same `output_index` to use that
-// canonical id.
+// Normalizes rotated item IDs from the Copilot proxy — see AGENTS.md for full context.
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
