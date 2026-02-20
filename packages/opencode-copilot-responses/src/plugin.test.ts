@@ -29,7 +29,10 @@ type HooksShape = {
 // Shared mock server and fetch override for end-to-end tests
 const captured = {
 	device: { client_id: "", scope: "" },
-	responses: [] as Array<{ headers: Record<string, string | null>; body: unknown }>,
+	responses: [] as Array<{
+		headers: Record<string, string | null>
+		body: unknown
+	}>,
 }
 const state = {
 	polls: 0,
@@ -212,43 +215,34 @@ describe("config hook", () => {
 	it("does not overwrite existing copilot-responses provider", async () => {
 		const hooks = (await CopilotResponsesPlugin(stubInput())) as unknown as HooksShape
 		const existing = { npm: "custom", name: "Custom", models: { x: 1 } }
-		const config = { provider: { "copilot-responses": existing } as Record<string, unknown> }
+		const config = {
+			provider: { "copilot-responses": existing } as Record<string, unknown>,
+		}
 		await hooks.config(config)
 		expect(config.provider["copilot-responses"]).toBe(existing)
 	})
 })
 
-// T02: auth hook contract
-describe("auth hook contract", () => {
-	it("has provider copilot-responses", async () => {
-		const hooks = (await CopilotResponsesPlugin(stubInput())) as unknown as HooksShape
-		expect(hooks.auth.provider).toBe("copilot-responses")
-	})
-
-	it("has one oauth method with correct label", async () => {
-		const hooks = (await CopilotResponsesPlugin(stubInput())) as unknown as HooksShape
-		expect(hooks.auth.methods.length).toBe(1)
-		expect(hooks.auth.methods[0].type).toBe("oauth")
-		expect(hooks.auth.methods[0].label).toBe("Login with GitHub (Copilot CLI)")
-	})
-
-	it("authorize returns url, instructions, method auto, and callback", async () => {
-		const hooks = (await CopilotResponsesPlugin(stubInput())) as unknown as HooksShape
-		const result = await hooks.auth.methods[0].authorize()
-		expect(typeof result.url).toBe("string")
-		expect(typeof result.instructions).toBe("string")
-		expect(result.method).toBe("auto")
-		expect(typeof result.callback).toBe("function")
-	})
-})
-
-// T03: end-to-end auth flow
+// T02+T03: auth hook contract verified through end-to-end flow
 describe("auth authorize end-to-end", () => {
 	it("performs device flow with correct client ID and scope, polls for token, checks entitlement", async () => {
 		state.polls = 0
 		captured.device = { client_id: "", scope: "" }
 		const hooks = (await CopilotResponsesPlugin(stubInput())) as unknown as HooksShape
+
+		// Contract: provider, method type, and label
+		expect(hooks.auth.provider).toBe("copilot-responses")
+		expect(hooks.auth.methods.length).toBe(1)
+		expect(hooks.auth.methods[0].type).toBe("oauth")
+		expect(hooks.auth.methods[0].label).toBe("Login with GitHub (Copilot CLI)")
+
 		const auth = await hooks.auth.methods[0].authorize()
+
+		// Contract: authorize shape
+		expect(auth.method).toBe("auto")
+		expect(typeof auth.callback).toBe("function")
+
+		// E2E: actual device flow
 		expect(auth.url).toContain("github.com/login/device")
 		expect(auth.instructions).toContain("ABCD-1234")
 
@@ -296,8 +290,20 @@ describe("auth loader", () => {
 				reasoning: false,
 				attachment: false,
 				toolcall: true,
-				input: { text: true, audio: false, image: false, video: false, pdf: false },
-				output: { text: true, audio: false, image: false, video: false, pdf: false },
+				input: {
+					text: true,
+					audio: false,
+					image: false,
+					video: false,
+					pdf: false,
+				},
+				output: {
+					text: true,
+					audio: false,
+					image: false,
+					video: false,
+					pdf: false,
+				},
 			},
 			cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
 			limit: { context: 200000, output: 64000 },
@@ -373,7 +379,9 @@ describe("auth loader", () => {
 			expires: 0,
 			baseUrl: state.base,
 		}
-		const result = await hooks.auth.loader(async () => stored, { models: {} } as never)
+		const result = await hooks.auth.loader(async () => stored, {
+			models: {},
+		} as never)
 		const doFetch = result.fetch as (req: string, init: RequestInit) => Promise<Response>
 
 		await doFetch(`${state.base}/responses`, {

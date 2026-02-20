@@ -33,7 +33,7 @@ summary:
 
 findings:
   - id: test-001
-    status: open
+    status: resolved
     severity: medium
     confidence: certain
     category: convention
