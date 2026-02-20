@@ -1,0 +1,59 @@
+domain: models-plugin
+scope: packages/opencode-copilot-responses/src/models/ + src/plugin.ts + src/index.ts
+date: 2026-02-19
+
+files_reviewed:
+  - packages/opencode-copilot-responses/src/models/registry.ts
+  - packages/opencode-copilot-responses/src/models/registry.test.ts
+  - packages/opencode-copilot-responses/src/plugin.ts
+  - packages/opencode-copilot-responses/src/plugin.test.ts
+  - packages/opencode-copilot-responses/src/index.ts
+
+summary:
+  total_findings: 2
+  by_severity:
+    critical: 0
+    high: 0
+    medium: 2
+    low: 0
+    info: 0
+  by_category:
+    bug: 1
+    security: 0
+    performance: 0
+    style: 0
+    structure: 0
+    convention: 1
+  assessment: |
+    One real bug: fetchModels() doesn't check res.ok. One missing test directly
+    related to that bug. Plugin integration is correct throughout.
+
+findings:
+  - id: models-001
+    status: open
+    severity: medium
+    confidence: certain
+    category: bug
+    files:
+      - packages/opencode-copilot-responses/src/models/registry.ts
+    title: fetchModels() does not check res.ok before parsing
+    description: |
+      registry.ts:115 calls res.json() without checking res.ok. Non-OK responses
+      (expired token, rate limit, infrastructure outage) will throw opaque SyntaxError
+      or return malformed data, preventing provider initialization with no clear error.
+    suggestion: |
+      Check res.ok before parsing. Return empty array or throw descriptive error on failure.
+
+  - id: models-002
+    status: open
+    severity: medium
+    confidence: certain
+    category: convention
+    files:
+      - packages/opencode-copilot-responses/src/models/registry.test.ts
+    title: No failure-path tests for /models fetch errors
+    description: |
+      No test covers the scenario where /models returns a non-OK response or malformed
+      payload. Directly related to models-001 — the bug has no test that would catch it.
+    suggestion: |
+      Add test for non-2xx /models response that asserts graceful handling.

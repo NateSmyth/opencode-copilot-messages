@@ -1,0 +1,75 @@
+domain: auth-module
+scope: packages/opencode-copilot-responses/src/auth/
+date: 2026-02-19
+
+files_reviewed:
+  - packages/opencode-copilot-responses/src/auth/index.ts
+  - packages/opencode-copilot-responses/src/auth/types.ts
+  - packages/opencode-copilot-responses/src/auth/headers.ts
+  - packages/opencode-copilot-responses/src/auth/oauth.ts
+  - packages/opencode-copilot-responses/src/auth/entitlement.ts
+  - packages/opencode-copilot-responses/src/auth/oauth.test.ts
+  - packages/opencode-copilot-responses/src/auth/entitlement.test.ts
+
+summary:
+  total_findings: 3
+  by_severity:
+    critical: 0
+    high: 0
+    medium: 0
+    low: 3
+    info: 0
+  by_category:
+    bug: 0
+    security: 0
+    performance: 0
+    style: 1
+    structure: 1
+    convention: 1
+  assessment: |
+    Clean module. Meets all spec requirements, mirrors the messages package patterns.
+    No bugs. Three low-severity style/convention items.
+
+findings:
+  - id: auth-001
+    status: open
+    severity: low
+    confidence: certain
+    category: convention
+    files:
+      - packages/opencode-copilot-responses/src/auth/oauth.test.ts
+    title: Unnecessary destructuring from load() returns
+    description: |
+      Lines 82, 94, 143, 145, 174, 203, 220, 235, 251 destructure from load()
+      return objects. Style guide says to use direct property access to preserve context.
+    suggestion: |
+      Use const mod = await load(); mod.pollForToken(...) instead of const { pollForToken } = await load().
+
+  - id: auth-002
+    status: open
+    severity: low
+    confidence: certain
+    category: convention
+    files:
+      - packages/opencode-copilot-responses/src/auth/oauth.test.ts
+    title: Brittle User-Agent assertion
+    description: |
+      Tests assert exact User-Agent value "undici" which is a Bun implementation detail,
+      not a spec requirement. Will break if Bun changes its default user-agent string.
+    suggestion: |
+      Assert header presence or match against a documented constant.
+
+  - id: auth-003
+    status: open
+    severity: low
+    confidence: certain
+    category: structure
+    files:
+      - packages/opencode-copilot-responses/src/auth/oauth.test.ts
+      - packages/opencode-copilot-responses/src/auth/entitlement.test.ts
+    title: Repetitive try/finally server cleanup
+    description: |
+      Auth tests repeat try/finally blocks for server lifecycle in every test case.
+      Provider tests already use a withServer helper that encapsulates this.
+    suggestion: |
+      Introduce a withServer helper matching the provider test pattern.

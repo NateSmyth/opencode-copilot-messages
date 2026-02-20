@@ -1,0 +1,78 @@
+domain: test-quality
+scope: all test files in packages/opencode-copilot-responses/src/
+date: 2026-02-19
+
+files_reviewed:
+  - packages/opencode-copilot-responses/src/plugin.test.ts
+  - packages/opencode-copilot-responses/src/auth/oauth.test.ts
+  - packages/opencode-copilot-responses/src/auth/entitlement.test.ts
+  - packages/opencode-copilot-responses/src/provider/fetch.test.ts
+  - packages/opencode-copilot-responses/src/provider/normalize.test.ts
+  - packages/opencode-copilot-responses/src/provider/initiator.test.ts
+  - packages/opencode-copilot-responses/src/models/registry.test.ts
+
+summary:
+  total_findings: 3
+  by_severity:
+    critical: 0
+    high: 0
+    medium: 1
+    low: 2
+    info: 0
+  by_category:
+    bug: 0
+    security: 0
+    performance: 0
+    style: 0
+    structure: 2
+    convention: 1
+  assessment: |
+    73 tests, zero mocks, real Bun HTTP servers throughout. Core integration behavior
+    is well covered. One real coverage gap (models fetch failure). Some trivial tests
+    could be consolidated.
+
+findings:
+  - id: test-001
+    status: open
+    severity: medium
+    confidence: certain
+    category: convention
+    files:
+      - packages/opencode-copilot-responses/src/plugin.test.ts
+    title: Auth hook contract tests assert shape not behavior
+    description: |
+      "has provider copilot-responses", "has one oauth method with correct label", and
+      "authorize returns url, instructions, method auto, and callback" assert static
+      shape/labels without tying to observable behavior. Reads like an interface
+      checklist rather than a behavior test.
+    suggestion: |
+      Merge into the end-to-end auth flow test that already exercises the full authorize path.
+
+  - id: test-002
+    status: open
+    severity: low
+    confidence: certain
+    category: structure
+    files:
+      - packages/opencode-copilot-responses/src/provider/initiator.test.ts
+    title: Redundant initiator edge-case tests
+    description: |
+      "returns agent for empty input array", "returns agent when user item has missing
+      content", and "returns agent when user item has empty content array" all test the
+      same default-to-agent behavior with trivially different inputs.
+    suggestion: |
+      Merge into a single parameterized test with representative inputs.
+
+  - id: test-003
+    status: open
+    severity: low
+    confidence: certain
+    category: structure
+    files:
+      - packages/opencode-copilot-responses/src/provider/fetch.test.ts
+    title: Repetitive internal-agent detection tests
+    description: |
+      Three nearly identical tests at line 215 force agent initiator based on
+      instructions/system string/array. Structurally identical except for input shape.
+    suggestion: |
+      Convert to a table-driven test.

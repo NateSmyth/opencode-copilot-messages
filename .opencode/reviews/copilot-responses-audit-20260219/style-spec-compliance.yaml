@@ -1,0 +1,98 @@
+domain: style-spec-compliance
+scope: all files in packages/opencode-copilot-responses/
+date: 2026-02-19
+
+files_reviewed:
+  - packages/opencode-copilot-responses/src/index.ts
+  - packages/opencode-copilot-responses/src/plugin.ts
+  - packages/opencode-copilot-responses/src/plugin.test.ts
+  - packages/opencode-copilot-responses/src/auth/index.ts
+  - packages/opencode-copilot-responses/src/auth/types.ts
+  - packages/opencode-copilot-responses/src/auth/headers.ts
+  - packages/opencode-copilot-responses/src/auth/oauth.ts
+  - packages/opencode-copilot-responses/src/auth/entitlement.ts
+  - packages/opencode-copilot-responses/src/auth/oauth.test.ts
+  - packages/opencode-copilot-responses/src/auth/entitlement.test.ts
+  - packages/opencode-copilot-responses/src/models/registry.ts
+  - packages/opencode-copilot-responses/src/models/registry.test.ts
+  - packages/opencode-copilot-responses/src/provider/fetch.ts
+  - packages/opencode-copilot-responses/src/provider/headers.ts
+  - packages/opencode-copilot-responses/src/provider/initiator.ts
+  - packages/opencode-copilot-responses/src/provider/normalize.ts
+  - packages/opencode-copilot-responses/src/provider/fetch.test.ts
+  - packages/opencode-copilot-responses/src/provider/normalize.test.ts
+  - packages/opencode-copilot-responses/src/provider/initiator.test.ts
+  - packages/opencode-copilot-responses/package.json
+
+summary:
+  total_findings: 4
+  by_severity:
+    critical: 0
+    high: 0
+    medium: 0
+    low: 3
+    info: 1
+  by_category:
+    bug: 0
+    security: 0
+    performance: 0
+    style: 2
+    structure: 1
+    convention: 1
+  assessment: |
+    Package aligns with the plugin architecture and mirrors the messages package.
+    Style compliance is good in source, weaker in tests (destructuring, try/finally).
+    Pending live-validation housekeeping items (T05, T10, T12, T13).
+
+findings:
+  - id: style-001
+    status: open
+    severity: low
+    confidence: certain
+    category: style
+    files:
+      - packages/opencode-copilot-responses/src/auth/oauth.test.ts
+      - packages/opencode-copilot-responses/src/models/registry.test.ts
+    title: Widespread unnecessary destructuring in tests
+    description: |
+      Test files destructure from load() return objects throughout.
+      Style guide prefers direct property access to preserve context.
+
+  - id: style-002
+    status: open
+    severity: low
+    confidence: certain
+    category: convention
+    files:
+      - packages/opencode-copilot-responses/src/auth/oauth.test.ts
+      - packages/opencode-copilot-responses/src/auth/entitlement.test.ts
+    title: Repetitive try/finally without shared helper
+    description: |
+      Auth tests repeat try/finally blocks for server cleanup in every test.
+      Provider tests already use a withServer helper for this.
+
+  - id: style-003
+    status: open
+    severity: low
+    confidence: certain
+    category: style
+    files:
+      - packages/opencode-copilot-responses/package.json
+    title: Package description inaccurate
+    description: |
+      Description says "/v1/responses" but actual endpoint is "/responses"
+      on a dynamically discovered base URL.
+
+  - id: style-004
+    status: open
+    severity: info
+    confidence: certain
+    category: structure
+    files:
+      - packages/opencode-copilot-responses/src/plugin.ts
+    title: LooseAuth with as-never cast reduces type safety
+    description: |
+      Plugin uses LooseAuth type and casts with "as never" when persisting auth
+      (plugin.ts:121). This is a pragmatic choice for tolerating old persisted data
+      but provides weaker compile-time guarantees than the messages package's
+      concrete StoredAuth approach.

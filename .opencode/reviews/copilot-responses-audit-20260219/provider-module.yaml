@@ -1,0 +1,91 @@
+domain: provider-module
+scope: packages/opencode-copilot-responses/src/provider/
+date: 2026-02-19
+
+files_reviewed:
+  - packages/opencode-copilot-responses/src/provider/fetch.ts
+  - packages/opencode-copilot-responses/src/provider/headers.ts
+  - packages/opencode-copilot-responses/src/provider/initiator.ts
+  - packages/opencode-copilot-responses/src/provider/normalize.ts
+  - packages/opencode-copilot-responses/src/provider/fetch.test.ts
+  - packages/opencode-copilot-responses/src/provider/normalize.test.ts
+  - packages/opencode-copilot-responses/src/provider/initiator.test.ts
+
+summary:
+  total_findings: 4
+  by_severity:
+    critical: 0
+    high: 0
+    medium: 0
+    low: 2
+    info: 2
+  by_category:
+    bug: 0
+    security: 0
+    performance: 0
+    style: 2
+    structure: 2
+    convention: 0
+  assessment: |
+    Solid module. SSE normalization works correctly for all observed Copilot event types.
+    Header injection, initiator detection, and vision detection all function as specified.
+    No confirmed bugs after triage.
+
+findings:
+  - id: provider-001
+    status: open
+    severity: low
+    confidence: certain
+    category: style
+    files:
+      - packages/opencode-copilot-responses/src/provider/normalize.ts
+    title: Verbose module header comment
+    description: |
+      Lines 1-10 contain a 10-line explanatory comment. The same content is already
+      documented in the package's AGENTS.md. Style guide limits comments to 1-2 lines.
+    suggestion: |
+      Condense to a 1-2 line summary referencing AGENTS.md for full rationale.
+
+  - id: provider-002
+    status: open
+    severity: low
+    confidence: certain
+    category: style
+    files:
+      - packages/opencode-copilot-responses/src/provider/fetch.ts
+    title: Comment exceeds 2-line guidance
+    description: |
+      Lines 85-87 contain a 3-line comment explaining stripIds behavior.
+    suggestion: |
+      Condense to 1 line.
+
+  - id: provider-003
+    status: open
+    severity: info
+    confidence: certain
+    category: structure
+    files:
+      - packages/opencode-copilot-responses/src/provider/fetch.ts
+    title: stripIds is redundant with opencode's own ID stripping
+    description: |
+      opencode's fetch wrapper at provider.ts:1032-1043 already strips id fields from
+      input items for all @ai-sdk/openai models before the plugin's custom fetch is called.
+      The plugin's stripIds is a harmless safety net but does redundant work (including a
+      second JSON.parse of every request body).
+    suggestion: |
+      Consider removing stripIds entirely, or document the defense-in-depth rationale.
+
+  - id: provider-004
+    status: open
+    severity: info
+    confidence: certain
+    category: structure
+    files:
+      - packages/opencode-copilot-responses/src/provider/headers.ts
+    title: Header minimization decision undocumented
+    description: |
+      Live validation (spec 05 T10) showed only Copilot-Integration-Id is strictly required.
+      Code still injects all headers. This is harmless but the decision to keep or remove
+      extras is not documented anywhere.
+    suggestion: |
+      Document the decision in the spec or in a code comment.
