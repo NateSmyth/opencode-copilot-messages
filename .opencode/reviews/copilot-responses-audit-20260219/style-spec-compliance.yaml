@@ -84,7 +84,7 @@ findings:
       on a dynamically discovered base URL.
 
   - id: style-004
-    status: open
+    status: resolved
     severity: info
     confidence: certain
     category: structure

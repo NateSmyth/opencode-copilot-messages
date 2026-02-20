@@ -116,6 +116,7 @@ async function resolveBaseUrl(
 ): Promise<string> {
 	if (typeof stored.baseUrl === "string" && stored.baseUrl.length > 0) return stored.baseUrl
 	const entitlement = await fetchEntitlement({ token })
+	// auth.set body type is opaque to the plugin; cast is unavoidable here
 	await input.client.auth.set({
 		path: { id: "copilot-responses" },
 		body: { ...stored, baseUrl: entitlement.baseUrl } as never,
