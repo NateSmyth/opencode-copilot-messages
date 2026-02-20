@@ -1,6 +1,6 @@
 {
 	"name": "opencode-copilot-responses",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "OpenCode plugin for Copilot via the OpenAI Responses API",
 	"type": "module",
 	"main": "./dist/index.js",
