@@ -47,7 +47,7 @@ findings:
       Condense to a 1-2 line summary referencing AGENTS.md for full rationale.
 
   - id: provider-002
-    status: open
+    status: resolved
     severity: low
     confidence: certain
     category: style

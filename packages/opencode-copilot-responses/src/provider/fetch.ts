@@ -82,9 +82,7 @@ function isSSE(response: Response): boolean {
 	return (response.headers.get("content-type") ?? "").includes("text/event-stream")
 }
 
-// Strip id fields from input items before sending to the Copilot proxy.
-// The proxy re-encrypts item IDs per-response; stale IDs from previous turns
-// are unresolvable.  Skip item_reference — its id IS the payload.
+// Strip stale IDs from input items (skip item_reference — its id IS the payload).
 function stripIds(body: RequestInit["body"] | null | undefined): string | null | undefined {
 	if (typeof body !== "string") return body as null | undefined
 	try {
