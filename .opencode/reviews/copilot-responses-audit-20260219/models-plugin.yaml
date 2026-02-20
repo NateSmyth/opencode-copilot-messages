@@ -45,7 +45,7 @@ findings:
       Check res.ok before parsing. Return empty array or throw descriptive error on failure.
 
   - id: models-002
-    status: open
+    status: resolved
     severity: medium
     confidence: certain
     category: convention

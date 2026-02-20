@@ -246,6 +246,14 @@ describe("copilot responses model registry", () => {
 		expect(stable.status).toBe("active")
 	})
 
+	it("returns empty array on non-OK /models response", async () => {
+		const { url, stop } = serve(() => new Response("server error", { status: 500 }))
+		const mod = await load()
+		const result = await mod.fetchModels({ token: "tok", baseUrl: url })
+		stop()
+		expect(result).toEqual([])
+	})
+
 	it("produces full expected shape for gpt-5.3-codex fixture", async () => {
 		const { map } = await load()
 		const result = map(GPT53_FIXTURE, BASE_URL)
