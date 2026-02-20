@@ -1,7 +1,7 @@
 {
 	"name": "opencode-copilot-responses",
 	"version": "0.0.0",
-	"description": "OpenCode plugin for Copilot OpenAI via Responses API (/v1/responses)",
+	"description": "OpenCode plugin for Copilot via the OpenAI Responses API",
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",

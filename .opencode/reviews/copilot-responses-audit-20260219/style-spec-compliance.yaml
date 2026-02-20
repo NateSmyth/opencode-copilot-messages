@@ -72,7 +72,7 @@ findings:
       Provider tests already use a withServer helper for this.
 
   - id: style-003
-    status: open
+    status: resolved
     severity: low
     confidence: certain
     category: style
