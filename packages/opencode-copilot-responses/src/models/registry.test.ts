@@ -142,9 +142,9 @@ describe("copilot responses model registry", () => {
 			},
 		})
 
-		const { fetchModels } = await load()
+		const mod = await load()
 		const url = `http://127.0.0.1:${server.port}`
-		const result = await fetchModels({ token: "test-token", baseUrl: url })
+		const result = await mod.fetchModels({ token: "test-token", baseUrl: url })
 		server.stop()
 
 		expect(result.length).toBe(2)
@@ -168,11 +168,11 @@ describe("copilot responses model registry", () => {
 			},
 		})
 
-		const { fetchModels } = await load()
+		const mod = await load()
 		const url = `http://127.0.0.1:${server.port}`
 
 		for (const _ of envelopes) {
-			const result = await fetchModels({ token: "tok", baseUrl: url })
+			const result = await mod.fetchModels({ token: "tok", baseUrl: url })
 			expect(result.length).toBe(1)
 			expect(result[0].id).toBe("gpt-envelope")
 		}
@@ -181,8 +181,8 @@ describe("copilot responses model registry", () => {
 
 	it("sets reasoning true for all /responses models", async () => {
 		const { url, stop } = serveModels([minimal("gpt-5-mini", ["/responses"])])
-		const { fetchModels } = await load()
-		const result = await fetchModels({ token: "tok", baseUrl: url })
+		const mod = await load()
+		const result = await mod.fetchModels({ token: "tok", baseUrl: url })
 		stop()
 
 		expect(result.length).toBe(1)
@@ -211,8 +211,8 @@ describe("copilot responses model registry", () => {
 		}
 
 		const { url, stop } = serveModels([vision])
-		const { fetchModels } = await load()
-		const result = await fetchModels({ token: "tok", baseUrl: url })
+		const mod = await load()
+		const result = await mod.fetchModels({ token: "tok", baseUrl: url })
 		stop()
 
 		expect(result.length).toBe(1)
@@ -222,8 +222,8 @@ describe("copilot responses model registry", () => {
 
 	it("sets correct invariants on all mapped models", async () => {
 		const { url, stop } = serveModels([minimal("gpt-inv", ["/responses"])])
-		const { fetchModels } = await load()
-		const result = await fetchModels({ token: "tok", baseUrl: url })
+		const mod = await load()
+		const result = await mod.fetchModels({ token: "tok", baseUrl: url })
 		stop()
 
 		const model = result[0]
@@ -238,9 +238,9 @@ describe("copilot responses model registry", () => {
 	})
 
 	it("sets status beta for preview models, active otherwise", async () => {
-		const { map } = await load()
-		const preview = map({ ...minimal("prev", ["/responses"]), preview: true }, BASE_URL)
-		const stable = map(minimal("stable", ["/responses"]), BASE_URL)
+		const mod = await load()
+		const preview = mod.map({ ...minimal("prev", ["/responses"]), preview: true }, BASE_URL)
+		const stable = mod.map(minimal("stable", ["/responses"]), BASE_URL)
 
 		expect(preview.status).toBe("beta")
 		expect(stable.status).toBe("active")
@@ -255,8 +255,8 @@ describe("copilot responses model registry", () => {
 	})
 
 	it("produces full expected shape for gpt-5.3-codex fixture", async () => {
-		const { map } = await load()
-		const result = map(GPT53_FIXTURE, BASE_URL)
+		const mod = await load()
+		const result = mod.map(GPT53_FIXTURE, BASE_URL)
 
 		const expected: Model = {
 			id: "gpt-5.3-codex",

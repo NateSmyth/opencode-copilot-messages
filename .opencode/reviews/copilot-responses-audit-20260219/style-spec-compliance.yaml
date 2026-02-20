@@ -46,7 +46,7 @@ summary:
 
 findings:
   - id: style-001
-    status: open
+    status: resolved
     severity: low
     confidence: certain
     category: style

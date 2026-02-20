@@ -32,7 +32,7 @@ summary:
 
 findings:
   - id: auth-001
-    status: open
+    status: resolved
     severity: low
     confidence: certain
     category: convention

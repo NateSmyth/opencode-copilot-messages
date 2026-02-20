@@ -88,24 +88,24 @@ describe("authorizeDeviceCode", () => {
 				return Response.json(fixture)
 			},
 			async (url) => {
-				const { authorizeDeviceCode } = await load()
-				const res = await authorizeDeviceCode({ url, fetch })
+				const mod = await load()
+				const res = await mod.authorizeDeviceCode({ url, fetch })
 				expect(res).toEqual(fixture)
 			}
 		)
 	})
 
 	it("uses the exported CLIENT_ID constant", async () => {
-		const { CLIENT_ID } = await load()
-		expect(CLIENT_ID).toBe("Ov23ctDVkRmgkPke0Mmm")
+		const mod = await load()
+		expect(mod.CLIENT_ID).toBe("Ov23ctDVkRmgkPke0Mmm")
 	})
 
 	it("throws on non-OK response", async () => {
 		await withServer(
 			() => new Response("bad", { status: 500 }),
 			async (url) => {
-				const { authorizeDeviceCode } = await load()
-				const run = authorizeDeviceCode({ url, fetch })
+				const mod = await load()
+				const run = mod.authorizeDeviceCode({ url, fetch })
 				await expect(run).rejects.toThrow(/500/)
 			}
 		)
@@ -138,8 +138,8 @@ describe("pollForToken", () => {
 			},
 			async (url) => {
 				const { waits, input } = polling(url)
-				const { pollForToken } = await load()
-				const res = await pollForToken(input)
+				const mod = await load()
+				const res = await mod.pollForToken(input)
 				expect(res).toEqual(token)
 				expect(waits).toEqual([5000])
 			}
@@ -164,8 +164,8 @@ describe("pollForToken", () => {
 			},
 			async (url) => {
 				const { waits, input } = polling(url)
-				const { pollForToken } = await load()
-				const res = await pollForToken(input)
+				const mod = await load()
+				const res = await mod.pollForToken(input)
 				expect(res).toEqual(token)
 				expect(waits).toEqual([10_000])
 			}
@@ -190,8 +190,8 @@ describe("pollForToken", () => {
 			},
 			async (url) => {
 				const { waits, input } = polling(url)
-				const { pollForToken } = await load()
-				const res = await pollForToken(input)
+				const mod = await load()
+				const res = await mod.pollForToken(input)
 				expect(res).toEqual(token)
 				expect(waits).toEqual([10_000])
 			}
@@ -203,8 +203,8 @@ describe("pollForToken", () => {
 			() => Response.json({ error: "access_denied" }),
 			async (url) => {
 				const { input } = polling(url)
-				const { pollForToken } = await load()
-				await expect(pollForToken(input)).rejects.toThrow("access_denied")
+				const mod = await load()
+				await expect(mod.pollForToken(input)).rejects.toThrow("access_denied")
 			}
 		)
 	})
@@ -214,8 +214,8 @@ describe("pollForToken", () => {
 			() => Response.json({ error: "expired_token" }),
 			async (url) => {
 				const { input } = polling(url)
-				const { pollForToken } = await load()
-				await expect(pollForToken(input)).rejects.toThrow("expired_token")
+				const mod = await load()
+				await expect(mod.pollForToken(input)).rejects.toThrow("expired_token")
 			}
 		)
 	})
@@ -227,8 +227,8 @@ describe("pollForToken", () => {
 			() => Response.json({ error: "authorization_pending" }),
 			async (url) => {
 				const { input } = polling(url, { expiresAt: expired })
-				const { pollForToken } = await load()
-				await expect(pollForToken(input)).rejects.toThrow("expired_token")
+				const mod = await load()
+				await expect(mod.pollForToken(input)).rejects.toThrow("expired_token")
 			}
 		)
 	})
