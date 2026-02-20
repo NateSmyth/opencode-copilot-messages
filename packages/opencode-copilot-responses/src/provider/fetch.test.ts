@@ -212,81 +212,43 @@ describe("copilotResponsesFetch", () => {
 		)
 	})
 
-	it("forces agent initiator for title generator instructions (string)", async () => {
+	it.each([
+		{
+			label: "instructions string",
+			body: {
+				instructions: "You are a title generator. Provide a short title.",
+				input: [{ role: "user", content: [{ type: "input_text", text: "hello" }] }],
+			},
+		},
+		{
+			label: "instructions array",
+			body: {
+				instructions: [
+					{
+						type: "text",
+						text: "You are a title generator. Provide a short title.",
+					},
+				],
+				input: [{ role: "user", content: [{ type: "input_text", text: "hello" }] }],
+			},
+		},
+		{
+			label: "system field",
+			body: {
+				system: "You are a title generator. Provide a short title.",
+				input: [{ role: "user", content: [{ type: "input_text", text: "hello" }] }],
+			},
+		},
+	])("forces agent initiator for title generator via $label", async ({ body }) => {
 		await withServer(
 			(req) => {
 				expect(req.headers.get("x-initiator")).toBe("agent")
 				return new Response("ok")
 			},
 			async (url) => {
-				const res = await copilotResponsesFetch(
-					url,
-					post({
-						instructions: "You are a title generator. Provide a short title.",
-						input: [
-							{
-								role: "user",
-								content: [{ type: "input_text", text: "hello" }],
-							},
-						],
-					}),
-					{ token: "t" }
-				)
-				expect(res.ok).toBe(true)
-			}
-		)
-	})
-
-	it("forces agent initiator for title generator instructions (array)", async () => {
-		await withServer(
-			(req) => {
-				expect(req.headers.get("x-initiator")).toBe("agent")
-				return new Response("ok")
-			},
-			async (url) => {
-				const res = await copilotResponsesFetch(
-					url,
-					post({
-						instructions: [
-							{
-								type: "text",
-								text: "You are a title generator. Provide a short title.",
-							},
-						],
-						input: [
-							{
-								role: "user",
-								content: [{ type: "input_text", text: "hello" }],
-							},
-						],
-					}),
-					{ token: "t" }
-				)
-				expect(res.ok).toBe(true)
-			}
-		)
-	})
-
-	it("forces agent initiator for system field fallback", async () => {
-		await withServer(
-			(req) => {
-				expect(req.headers.get("x-initiator")).toBe("agent")
-				return new Response("ok")
-			},
-			async (url) => {
-				const res = await copilotResponsesFetch(
-					url,
-					post({
-						system: "You are a title generator. Provide a short title.",
-						input: [
-							{
-								role: "user",
-								content: [{ type: "input_text", text: "hello" }],
-							},
-						],
-					}),
-					{ token: "t" }
-				)
+				const res = await copilotResponsesFetch(url, post(body), {
+					token: "t",
+				})
 				expect(res.ok).toBe(true)
 			}
 		)

@@ -64,7 +64,7 @@ findings:
       Merge into a single parameterized test with representative inputs.
 
   - id: test-003
-    status: open
+    status: resolved
     severity: low
     confidence: certain
     category: structure
