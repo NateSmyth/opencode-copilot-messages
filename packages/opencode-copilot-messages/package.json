@@ -23,9 +23,9 @@
 		"format": "biome format --write .",
 		"test": "bun test",
 		"preflight": "bun test && bun run check && bun run lint",
-		"release:patch": "bun run preflight && npm version patch && npm publish && git push --follow-tags",
-		"release:minor": "bun run preflight && npm version minor && npm publish && git push --follow-tags",
-		"release:major": "bun run preflight && npm version major && npm publish && git push --follow-tags",
+		"release:patch": "bun run preflight && bun pm version patch && bun publish && git push --follow-tags",
+		"release:minor": "bun run preflight && bun pm version minor && bun publish && git push --follow-tags",
+		"release:major": "bun run preflight && bun pm version major && bun publish && git push --follow-tags",
 		"prepublishOnly": "bun run build"
 	},
 	"dependencies": {
