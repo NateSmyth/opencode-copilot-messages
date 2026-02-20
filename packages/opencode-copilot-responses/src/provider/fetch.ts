@@ -82,7 +82,7 @@ function isSSE(response: Response): boolean {
 	return (response.headers.get("content-type") ?? "").includes("text/event-stream")
 }
 
-// Strip stale IDs from input items (skip item_reference — its id IS the payload).
+// Strip stale IDs from input items; item_reference keeps its id.
 function stripIds(body: RequestInit["body"] | null | undefined): string | null | undefined {
 	if (typeof body !== "string") return body as null | undefined
 	try {

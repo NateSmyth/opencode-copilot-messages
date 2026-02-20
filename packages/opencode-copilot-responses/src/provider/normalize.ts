@@ -1,4 +1,4 @@
-// Normalizes rotated item IDs from the Copilot proxy — see AGENTS.md for full context.
+// Normalizes rotated item IDs from the Copilot proxy.
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()

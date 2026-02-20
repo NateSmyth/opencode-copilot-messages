@@ -47,7 +47,6 @@ export function mapToOpencodeModel(model: CopilotModel, baseUrl: string): Model 
 	const limits = caps.limits ?? {}
 	const supports = caps.supports ?? {}
 	const vision = !!supports.vision
-	const reasoning = true
 
 	return {
 		id: model.id,
@@ -60,7 +59,7 @@ export function mapToOpencodeModel(model: CopilotModel, baseUrl: string): Model 
 		},
 		capabilities: {
 			temperature: true,
-			reasoning,
+			reasoning: true,
 			attachment: vision,
 			toolcall: !!supports.tool_calls,
 			input: {
