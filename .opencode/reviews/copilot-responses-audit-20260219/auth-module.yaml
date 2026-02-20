@@ -46,7 +46,7 @@ findings:
       Use const mod = await load(); mod.pollForToken(...) instead of const { pollForToken } = await load().
 
   - id: auth-002
-    status: open
+    status: resolved
     severity: low
     confidence: certain
     category: convention
