@@ -15,17 +15,11 @@ describe("determineInitiator", () => {
 		expect(determineInitiator(input)).toBe("agent")
 	})
 
-	it("returns agent for empty input array", () => {
-		expect(determineInitiator([])).toBe("agent")
-	})
-
-	it("returns agent when user item has missing content", () => {
-		const input = [{ role: "user" }]
-		expect(determineInitiator(input)).toBe("agent")
-	})
-
-	it("returns agent when user item has empty content array", () => {
-		const input = [{ role: "user", content: [] }]
+	it.each([
+		{ label: "empty input", input: [] },
+		{ label: "missing content", input: [{ role: "user" }] },
+		{ label: "empty content array", input: [{ role: "user", content: [] }] },
+	])("defaults to agent for $label", ({ input }) => {
 		expect(determineInitiator(input)).toBe("agent")
 	})
 })
@@ -37,7 +31,10 @@ describe("hasImageContent", () => {
 				role: "user",
 				content: [
 					{ type: "input_text", text: "look at this" },
-					{ type: "input_image", image_url: { url: "data:image/png;base64,AA==" } },
+					{
+						type: "input_image",
+						image_url: { url: "data:image/png;base64,AA==" },
+					},
 				],
 			},
 		]

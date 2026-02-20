@@ -49,7 +49,7 @@ findings:
       Merge into the end-to-end auth flow test that already exercises the full authorize path.
 
   - id: test-002
-    status: open
+    status: resolved
     severity: low
     confidence: certain
     category: structure
