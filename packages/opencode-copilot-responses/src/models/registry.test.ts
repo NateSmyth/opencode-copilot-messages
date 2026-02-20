@@ -293,7 +293,7 @@ describe("copilot responses model registry", () => {
 				cache: { read: 0, write: 0 },
 			},
 			limit: {
-				context: 1048576,
+				context: 983040,
 				output: 65536,
 			},
 			status: "beta",
